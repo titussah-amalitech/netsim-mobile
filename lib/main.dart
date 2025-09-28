@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
+import 'package:netsim_mobile/app/core/widgets/bottom_nav_widget.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+
+import 'app/views/new_device_page.dart';
 
 void main() {
   runApp(ProviderScope(child: MyApp()));
@@ -25,8 +27,9 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
       ),
       routes: {
-        "/": (context) => const Onboarding(),
+        "/": (context) => const BottomNavWidget(),
         "dashboard": (context) => DashboardScreen(),
+        'new-device': (context) => const NewDevicePage(),
       },
     );
   }
