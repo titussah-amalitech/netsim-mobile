@@ -11,3 +11,9 @@ class DeviceTypes {
 //stored in a list form
   static List<String> allDevice= [routerDevice, switchDevice, serverDevice, pcDevice, otherDevice];
 } 
+
+class DeviceStatusTypes {
+  static String onlineStatus = 'online';
+  static String offlineStatus= 'offline';
+  static String warningStatus = 'warning';
+}

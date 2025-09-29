@@ -3,7 +3,6 @@
 import 'dart:convert';
 
 import 'package:netsim_mobile/app/models/device_parameters_model.dart';
-import 'package:netsim_mobile/app/models/device_status_model.dart';
 
 import 'device_position_model.dart';
 
@@ -13,13 +12,13 @@ class DeviceModel {
   String name;
   String type;
   DevicePosition? position;
-  DeviceStatus? status;
+  String status;
   DeviceParameters parameters;
   DeviceModel({
     required this.name,
     required this.type,
     this.position,
-    this.status,
+    required this.status,
     required this.parameters,
   });
 
@@ -30,7 +29,7 @@ class DeviceModel {
     String? name,
     String? type,
     DevicePosition? position,
-    DeviceStatus? status,
+    String? status,
     DeviceParameters? parameters,
   }) {
     return DeviceModel(
@@ -48,7 +47,7 @@ class DeviceModel {
       'name': name,
       'type': type,
       'position': position?.toMap(),
-      'status': status?.toMap(),
+      'status': status,
       'parameters': parameters.toMap(),
     };
   }
@@ -59,7 +58,7 @@ class DeviceModel {
       name: map['name'] as String,
       type: map['type'] as String,
       position: map['position'] != null ? DevicePosition.fromMap(map['position'] as Map<String,dynamic>) : null,
-      status: map['status'] != null ? DeviceStatus.fromMap(map['status'] as Map<String,dynamic>) : null,
+      status: map['status'] as String,
       parameters: DeviceParameters.fromMap(map['parameters'] as Map<String,dynamic>),
     );
   }

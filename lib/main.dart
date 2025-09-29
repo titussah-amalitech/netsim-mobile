@@ -4,7 +4,6 @@ import 'package:netsim_mobile/features/dashboard/presentation/screens/dashboard_
 import 'package:netsim_mobile/app/core/widgets/bottom_nav_widget.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
-import 'app/views/new_device_page.dart';
 
 void main() {
   runApp(ProviderScope(child: MyApp()));
@@ -29,7 +28,7 @@ class MyApp extends StatelessWidget {
       routes: {
         "/": (context) => const BottomNavWidget(),
         "dashboard": (context) => DashboardScreen(),
-        'new-device': (context) => const NewDevicePage(),
+        // 'new-device': (context) => const NewDevicePage(),
       },
     );
   }

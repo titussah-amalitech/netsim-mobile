@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:netsim_mobile/app/models/device_model.dart';
 
@@ -30,7 +28,8 @@ static Future<({bool success, String message, List<DeviceModel> devices})> getDe
     final response = await dio.get('/devices'); 
     if (response.statusCode == 200) {
       var data =response.data['data'] as List; //Assuming the response data is a list of devices
-      List<DeviceModel> devices = data.map((device) => DeviceModel.fromMap(device)).toList(); //Convert each map to DeviceModel object
+      List<DeviceModel> devices = data.map((device) => DeviceModel.fromMap(device)).toList();
+       //Convert each map to DeviceModel object
       return (success: true,message: 'Devices retrieved successfully',devices: devices);
     
     } else {

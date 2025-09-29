@@ -15,7 +15,7 @@ class _BottomNavWidgetState extends State<BottomNavWidget> {
     final appScreens =[
     const Onboarding(),
     const DeviceListScreen(),
-    const LogCard(),
+    const LogsPage(),
   ];
 
   int _currentIndex = 0;
