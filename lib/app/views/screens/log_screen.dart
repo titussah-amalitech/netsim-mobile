@@ -42,7 +42,15 @@ class _LogsPageState extends ConsumerState<LogsPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text("Type: ${log.eventType}"),
-                    Text("Status: ${log.status}"),
+                    Text("Status: ${log.status}",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: log.status == "online"
+                              ? Colors.green
+                              : log.status == "offline"
+                              ? Colors.red
+                              : Colors.orange,
+                        )),
                     Text("Time: ${log.timestamp.toLocal().toString()}"),
                   ],
                 ),

@@ -1,3 +1,4 @@
+/*
 import 'package:flutter/material.dart';
 import 'package:netsim_mobile/app/models/log_model.dart';
 
@@ -38,3 +39,5 @@ class LogItem extends StatelessWidget {
     );
   }
 }
+
+*/
