@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:netsim_mobile/app/views/screens/latest_logs_list.dart';
 import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
 import 'package:netsim_mobile/app/views/screens/device_list_screen.dart';
-import 'package:netsim_mobile/app/views/screens/log_screen.dart';
 
 class BottomNavWidget extends StatefulWidget {
   const BottomNavWidget({super.key});
@@ -15,7 +15,7 @@ class _BottomNavWidgetState extends State<BottomNavWidget> {
     final appScreens =[
     const Onboarding(),
     const DeviceListScreen(),
-    const LogsPage(),
+    const LatestLogsList(),
   ];
 
   int _currentIndex = 0;
