@@ -12,32 +12,7 @@ class DeviceListScreen extends ConsumerStatefulWidget {
 }
 
 class _DeviceListScreenState extends ConsumerState<DeviceListScreen> {
-  Widget _statusBadge(String status) {
-    Color color;
-    IconData icon;
-    final s = status.toLowerCase();
-    if (s == DeviceStatusTypes.onlineStatus) {
-      color = Colors.green;
-      icon = Icons.check_circle;
-    } else if (s == DeviceStatusTypes.offlineStatus) {
-      color = Colors.red;
-      icon = Icons.remove_circle;
-    } else if (s == DeviceStatusTypes.warningStatus) {
-      color = Colors.orange;
-      icon = Icons.error;
-    } else {
-      color = Colors.grey;
-      icon = Icons.info;
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 16),
-        const SizedBox(width: 8),
-      ],
-    );
-  }
+ 
   @override
   Widget build(BuildContext context) {
     var getDevices = ref.watch(devicesFutureProvider);
@@ -71,7 +46,7 @@ class _DeviceListScreenState extends ConsumerState<DeviceListScreen> {
                     children: [
                       const Icon(Icons.devices),
                       const SizedBox(width: 8),
-                      _statusBadge(device.status),
+                      //_statusBadge(device.status),
                     ],
                   ),
                   title: Text(device.name),
