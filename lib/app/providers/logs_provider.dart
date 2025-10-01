@@ -1,6 +1,7 @@
 
 
 import 'package:netsim_mobile/app/services/log_services.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:riverpod/legacy.dart';
 import 'package:riverpod/riverpod.dart';
@@ -67,9 +68,8 @@ class LatestLogNotifier extends StateNotifier<LogModel?> {
         state = null;
       }
     } catch (e) {
-      // Optionally log the error; don't crash the notifier
-      // ignore: avoid_print
-      print('Error fetching latest log: $e');
+     
+      debugPrint('Error fetching latest log: $e');
     }
   }
 
@@ -109,7 +109,7 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
     } catch (e) {
       // ignore but print for dev
       // ignore: avoid_print
-      print('Error seeding initial logs: $e');
+      debugPrint('Error seeding initial logs: $e');
     }
   }
 
@@ -125,7 +125,7 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
     } catch (e) {
       // ignore errors but print for dev
       // ignore: avoid_print
-      print('Error fetching latest for list: $e');
+      debugPrint('Error fetching latest for list: $e');
     }
   }
 
@@ -134,8 +134,7 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
     state = <LogModel>[];
   }
 
-  /// Load more logs (older ones) and append at the end of the list.
-  /// This uses `fetchLogs()` and appends logs that are not already present.
+ 
   Future<void> loadMore({int count = 20}) async {
     try {
       final all = await LogServices.fetchLogs();
@@ -157,7 +156,7 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
       state = [...state, ...newOnes.take(count)];
     } catch (e) {
       // ignore: avoid_print
-      print('Error loading more logs: $e');
+      debugPrint('Error loading more logs: $e');
     }
   }
 

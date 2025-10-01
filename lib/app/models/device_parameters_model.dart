@@ -42,11 +42,18 @@ class DeviceParameters {
 
 // Convert from map to object
   factory DeviceParameters.fromMap(Map<String, dynamic> map) {
+    double parseDouble(dynamic v) {
+      if (v == null) return 0.0;
+      if (v is double) return v;
+      if (v is int) return v.toDouble();
+      return double.tryParse(v.toString()) ?? 0.0;
+    }
+
     return DeviceParameters(
-       double.parse(map['pingInterval'].toString()),
-       double.parse(map['latencyThreshold'].toString()),
-      double.parse(map['failureProbability'].toString()),
-       double.parse(map['trafficLoad'].toString()),
+      parseDouble(map['pingInterval'] ?? map['ping_interval'] ?? map['ping']),
+      parseDouble(map['latencyThreshold'] ?? map['latency_threshold'] ?? map['latency']),
+      parseDouble(map['failureProbability'] ?? map['failure_probability'] ?? map['failure']),
+      parseDouble(map['trafficLoad'] ?? map['traffic_load'] ?? map['traffic']),
     );
   }
 

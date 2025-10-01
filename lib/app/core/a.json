@@ -1,0 +1,26 @@
+{
+    "success":true,
+    "data":{
+        "metadata":{"createdBy":"admin",
+        "createdAt":"2025-10-01T08:00:00.000Z",
+        "description":"Intro scenario with a single router."},
+        "_id":"68dcf862f375f9b56c4f5c83",
+        "name":"Basic Routing Lab",
+        "difficulty":"easy",
+        "timeLimit":600,
+        "devices":[
+            {
+                "position":{"x":50,"y":80},
+                "parameters":{"pingInterval":30,
+                "latencyThreshold":100,
+                "failureProbability":0.05,
+                "trafficLoad":20},
+                "status":{"online":true,
+                "latency":15,
+                "lastChecked":"2025-10-01T08:30:00.000Z"},
+                "_id":"68dd014d69d97823ccd33e83",
+                "device":"652f3a1c9a1b5f001e223a11"
+            }
+        ]
+    }
+    }

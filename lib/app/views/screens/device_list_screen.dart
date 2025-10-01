@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/app/providers/devices_provider.dart';
 
-import '../../core/constant_data.dart';
-
 class DeviceListScreen extends ConsumerStatefulWidget {
   const DeviceListScreen({super.key});
 
@@ -49,24 +47,21 @@ class _DeviceListScreenState extends ConsumerState<DeviceListScreen> {
                       //_statusBadge(device.status),
                     ],
                   ),
-                  title: Text(device.name),
+                  title: Text(device.type),
                   subtitle: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Type: ${device.type}'),
+                      
                       Text(
-                        'Status: ${device.status}',
+                        'Status: ${device.status.online ? "online" : "offline"}',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: device.status == DeviceStatusTypes.onlineStatus
-                              ? Colors.green
-                              : device.status == DeviceStatusTypes.offlineStatus
-                              ? Colors.red
-                              : Colors.yellow,
+                          fontSize: 13,
+                          color: device.status.online ? Colors.green : Colors.red,
                         ),
                       ),
+                      Text('Parameters: ....'),
                     ],
                   ),
                   trailing: IconButton(
@@ -76,22 +71,20 @@ class _DeviceListScreenState extends ConsumerState<DeviceListScreen> {
                       showDialog<void>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: Text(device.name),
+                          title: Text(device.type),
                           content: SingleChildScrollView(
                             child: ListBody(
                               children: [
-                                Text('Type: ${device.type}'),
+                                Text('ID: ${device.deviceId}'),
                                 const SizedBox(height: 8),
-                                Text('Status: ${device.status}'),
+                                Text('Status: ${device.status.online ? "online" : "offline"}'),
                                 const SizedBox(height: 8),
-                                if (device.position != null) ...[
-                                  Text('Position:'),
-                                  Text('  x: ${device.position!.x}'),
-                                  Text('  y: ${device.position!.y}'),
-                                  const SizedBox(height: 8),
-                                ],
+                                Text('Position:'),
+                                Text('  x: ${device.position.x}'),
+                                Text('  y: ${device.position.y}'),
+                                const SizedBox(height: 8),
                                 Text('Parameters:'),
-                                Text('  ${device.parameters.toMap().entries.map((e) => '${e.key}: ${e.value}').join('\n  ')}'),
+                                Text('  pingInterval: ${device.parameters.pingInterval}\n  latencyThreshold: ${device.parameters.latencyThreshold}\n  failureProbability: ${device.parameters.failureProbability}\n  trafficLoad: ${device.parameters.trafficLoad}'),
                               ],
                             ),
                           ),

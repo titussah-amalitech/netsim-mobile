@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:netsim_mobile/app/models/device_model.dart';
+import 'package:netsim_mobile/app/models/device_features.dart';
 
 //class for devices calls
 class DeviceServices {
@@ -9,35 +11,21 @@ class DeviceServices {
     ),
   );
 
-//function to add a device to the database
-  static Future<({bool success, String message,DeviceModel ?device})> addDevice(DeviceModel deviceData) async {
-    try {
-      final response = await dio.post('/devices', data: deviceData.toMap()); //Cange object to map before sending to the database
-      if (response.statusCode == 201) {
-        return (success: true, message: 'Device added successfully', device: DeviceModel.fromMap(response.data)); //Change map to object after receiving from the database
-      } else {
-        return (success: false, message: response.statusMessage??'Failed to add device', device:null); //if failed to add device send message and null device
-      }
-    } catch (e) {
-      return (success: false, message: 'Error: $e', device:null); //if error occurs send message and null device
-    }
-  }
-// Function to get all devices from the database
-static Future<({bool success, String message, List<DeviceModel> devices})> getDevices() async {
+static Future<({bool success, String message, List<Device> devices})> getDevices() async {
   try {
-    final response = await dio.get('/devices'); 
-    if (response.statusCode == 200) {
-      var data =response.data['data'] as List; //Assuming the response data is a list of devices
-      List<DeviceModel> devices = data.map((device) => DeviceModel.fromMap(device)).toList();
-       //Convert each map to DeviceModel object
-      return (success: true,message: 'Devices retrieved successfully',devices: devices);
-    
-    } else {
-      return (success: false, message: response.statusMessage ?? 'Failed to get devices',devices: <DeviceModel>[]);
-    }
+      final response = await dio.get('scenarios/load/68dd3238f375f9b56c4f5c90');
+      if (response.statusCode == 200) {
+        dynamic payload = response.data;
+        if (payload is Map && payload.containsKey('data')) payload = payload['data'];
+        // Convert the (unwrapped) scenario map into DeviceModel which will parse nested devices
+        final model = DeviceModel.fromMap(payload as Map<String, dynamic>);
+        return (success: true, message: 'Devices retrieved successfully', devices: model.devices);
+      } else {
+        return (success: false, message: response.statusMessage ?? 'Failed to get devices', devices: <Device>[]);
+      }
   } catch (e) {
-    print("Errpr: $e");
-    return (success: false,message: 'Error: $e',devices: <DeviceModel>[]);
+      if (kDebugMode) print('Error in getDevices: $e');
+      return (success: false, message: 'Error: $e', devices: <Device>[]);
   }
 }
 }

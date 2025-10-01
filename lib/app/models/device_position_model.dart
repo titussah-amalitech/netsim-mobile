@@ -30,9 +30,16 @@ class DevicePosition {
 
 // Convert from map to object
   factory DevicePosition.fromMap(Map<String, dynamic> map) {
+    double parseDouble(dynamic v) {
+      if (v == null) return 0.0;
+      if (v is double) return v;
+      if (v is int) return v.toDouble();
+      return double.tryParse(v.toString()) ?? 0.0;
+    }
+
     return DevicePosition(
-      map['x'] as double,
-      map['y'] as double,
+      parseDouble(map['x'] ?? map['pos_x'] ?? 0.0),
+      parseDouble(map['y'] ?? map['pos_y'] ?? 0.0),
     );
   }
 

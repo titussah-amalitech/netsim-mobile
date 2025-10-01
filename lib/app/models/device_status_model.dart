@@ -37,10 +37,33 @@ class DeviceStatus {
 
 // Convert from map to object
   factory DeviceStatus.fromMap(Map<String, dynamic> map) {
+    bool parseBool(dynamic v) {
+      if (v == null) return false;
+      if (v is bool) return v;
+      final s = v.toString().toLowerCase();
+      return s == 'true' || s == '1';
+    }
+
+    double parseDouble(dynamic v) {
+      if (v == null) return 0.0;
+      if (v is double) return v;
+      if (v is int) return v.toDouble();
+      return double.tryParse(v.toString()) ?? 0.0;
+    }
+
+    DateTime parseDate(dynamic v) {
+      if (v == null) return DateTime.now();
+      if (v is int) return DateTime.fromMillisecondsSinceEpoch(v);
+      final s = v.toString();
+      final parsedInt = int.tryParse(s);
+      if (parsedInt != null) return DateTime.fromMillisecondsSinceEpoch(parsedInt);
+      return DateTime.tryParse(s) ?? DateTime.now();
+    }
+
     return DeviceStatus(
-      map['online'] as bool,
-      map['latency'] as double,
-      DateTime.fromMillisecondsSinceEpoch(map['lastChecked'] as int),
+      parseBool(map['online'] ?? map['isOnline'] ?? map['online_status']),
+      parseDouble(map['latency'] ?? map['lag'] ?? 0.0),
+      parseDate(map['lastChecked'] ?? map['last_checked'] ?? map['lastPing']),
     );
   }
 
