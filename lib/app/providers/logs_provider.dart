@@ -41,10 +41,8 @@ final logsProvider = StateNotifierProvider<LogNotifier, LogState>((ref) {
   return LogNotifier();
 });
 
-// Provider to expose the single latest log and poll every 30 seconds
 final latestLogProvider = StateNotifierProvider<LatestLogNotifier, LogModel?>((ref) {
   final notifier = LatestLogNotifier(ref);
-  // Dispose the notifier when the provider is disposed
   ref.onDispose(() => notifier.dispose());
   return notifier;
 });
@@ -55,7 +53,7 @@ class LatestLogNotifier extends StateNotifier<LogModel?> {
 
   LatestLogNotifier(this.ref) : super(null) {
     _loadLatest();
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _loadLatest());
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _loadLatest());
   }
 
   Future<void> _loadLatest() async {
@@ -74,13 +72,13 @@ class LatestLogNotifier extends StateNotifier<LogModel?> {
   }
 
 
+  @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
   }
 }
 
-// Provider that keeps a list of latest logs (newest first)
 final latestLogsProvider = StateNotifierProvider<LatestLogsNotifier, List<LogModel>>((ref) {
   final notifier = LatestLogsNotifier(ref);
   ref.onDispose(() => notifier.dispose());
@@ -95,7 +93,7 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
 
   LatestLogsNotifier(this.ref) : super([]) {
     _seedInitialLogs();
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _loadLatest());
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _loadLatest());
   }
 
   Future<void> _seedInitialLogs() async {
@@ -107,8 +105,7 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
       final seed = all.take(initialSeedCount).toList();
       state = seed;
     } catch (e) {
-      // ignore but print for dev
-      // ignore: avoid_print
+     
       debugPrint('Error seeding initial logs: $e');
     }
   }
@@ -118,13 +115,11 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
       final latest = await LogServices.fetchLatestLog();
       if (latest == null) return;
 
-      // If the latest log is different from current top, prepend it
       if (state.isEmpty || latest.id != state.first.id) {
         state = [latest, ...state];
       }
     } catch (e) {
-      // ignore errors but print for dev
-      // ignore: avoid_print
+
       debugPrint('Error fetching latest for list: $e');
     }
   }
@@ -160,6 +155,7 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
     }
   }
 
+  @override
   void dispose() {
     _timer?.cancel();
     super.dispose();

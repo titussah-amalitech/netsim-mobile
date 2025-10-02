@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:netsim_mobile/app/views/screens/latest_logs_list.dart';
+import 'package:netsim_mobile/app/views/screens/logs_list_screen.dart';
 import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
 import 'package:netsim_mobile/app/views/screens/device_list_screen.dart';
 

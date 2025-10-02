@@ -13,7 +13,7 @@ import 'package:netsim_mobile/app/models/device_status_model.dart';
 // How the device is presented in the database(Database Schema)
 // They are in object form
 
-class DeviceModel {
+class ScenarioModel {
   final String id;
   final String name;
   final String difficulty;
@@ -23,7 +23,7 @@ class DeviceModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  DeviceModel({
+  ScenarioModel({
     required this.id,
     required this.name,
     required this.difficulty,
@@ -34,7 +34,7 @@ class DeviceModel {
     required this.updatedAt,
   });
 
-  DeviceModel copyWith({
+  ScenarioModel copyWith({
     String? id,
     String? name,
     String? difficulty,
@@ -44,7 +44,7 @@ class DeviceModel {
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return DeviceModel(
+    return ScenarioModel(
       id: id ?? this.id,
       name: name ?? this.name,
       difficulty: difficulty ?? this.difficulty,
@@ -69,7 +69,7 @@ class DeviceModel {
     };
   }
 
-  factory DeviceModel.fromMap(Map<String, dynamic> map) {
+  factory ScenarioModel.fromMap(Map<String, dynamic> map) {
     // Defensive parsing: accept camelCase or snake_case keys, handle nulls and different types
     final idVal = map['id'] ?? map['_id'] ?? '';
     final nameVal = map['name'] ?? '';
@@ -205,7 +205,7 @@ class DeviceModel {
     final createdAtVal = parseDate(map['createdAt'] ?? map['created_at'] ?? map['created_at_ms'] ?? map['created']);
     final updatedAtVal = parseDate(map['updatedAt'] ?? map['updated_at'] ?? map['updated_at_ms'] ?? map['updated']);
 
-    return DeviceModel(
+    return ScenarioModel(
       id: idVal.toString(),
       name: nameVal.toString(),
       difficulty: difficultyVal.toString(),
@@ -219,7 +219,7 @@ class DeviceModel {
 
   String toJson() => json.encode(toMap());
 
-  factory DeviceModel.fromJson(String source) => DeviceModel.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory ScenarioModel.fromJson(String source) => ScenarioModel.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
@@ -227,7 +227,7 @@ class DeviceModel {
   }
 
   @override
-  bool operator ==(covariant DeviceModel other) {
+  bool operator ==(covariant ScenarioModel other) {
     if (identical(this, other)) return true;
   
     return 

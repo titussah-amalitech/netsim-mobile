@@ -23,11 +23,10 @@ class _DeviceListScreenState extends ConsumerState<DeviceListScreen> {
       body: getDevices.when(
         loading: () => Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) {
-          print('Error: $error');
           return Center(child: Text('Error: $error'));
         },
         data: (devices) {
-          print("Devices length: ${devices.length}");
+
           return ListView.builder(
             itemCount: devices.length,
             itemBuilder: (context, index) {
