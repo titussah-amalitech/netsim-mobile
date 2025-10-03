@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
+import 'package:netsim_mobile/features/scenarios/presentation/game_view.dart';
+import 'package:netsim_mobile/features/scenarios/presentation/scenario_list.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {
@@ -26,7 +28,9 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         "/": (context) => const Onboarding(),
-        "dashboard": (context) => DashboardScreen(),
+        "/game": (context) => const GameView(),
+        "/dashboard": (context) => const DashboardScreen(),
+        "/scenario": (context) => const ScenarioListScreen(),
       },
     );
   }
