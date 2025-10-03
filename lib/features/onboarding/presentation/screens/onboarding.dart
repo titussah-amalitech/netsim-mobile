@@ -12,7 +12,6 @@ class Onboarding extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: ShadCard(
             title: Text("Network Simulation Game"),
-
             child: Column(
               spacing: 15,
               mainAxisSize: MainAxisSize.min,
@@ -21,11 +20,13 @@ class Onboarding extends StatelessWidget {
                   width: double.infinity,
                   leading: Icon(Icons.add),
                   child: Text("New Game"),
+                  onPressed: () => Navigator.pushNamed(context, "/dashboard"),
                 ),
                 ShadButton(
                   width: double.infinity,
                   leading: Icon(Icons.new_label),
-                  child: Text("Scenario Editor"),
+                  child: Text("Scenario List"),
+                  onPressed: () => Navigator.pushNamed(context, "/scenario"),
                 ),
                 ShadButton(
                   width: double.infinity,
