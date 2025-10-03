@@ -273,7 +273,7 @@ packages:
     source: hosted
     version: "4.1.2"
   intl:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: intl
       sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
@@ -497,7 +497,7 @@ packages:
     source: hosted
     version: "2.2.0"
   riverpod:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: riverpod
       sha256: "135723ec44dfba141bc4696224048a408336e794228a0117439e7ad0a8be6d05"
@@ -508,10 +508,10 @@ packages:
     dependency: "direct main"
     description:
       name: shadcn_ui
-      sha256: "00ccc9db8b27dfb300b24227bb02b88ed0f7604a5fa6ecac942e6486ca25b3ed"
+      sha256: "9e4032c8a2deaabb458e3f52e3b0ca0591d1656381f31fe886ab8f4b28416a32"
       url: "https://pub.dev"
     source: hosted
-    version: "0.31.8"
+    version: "0.31.9"
   shelf:
     dependency: transitive
     description:
