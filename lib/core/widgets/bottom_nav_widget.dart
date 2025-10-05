@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:netsim_mobile/app/views/screens/logs_list_screen.dart';
-import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
-import 'package:netsim_mobile/app/views/screens/device_list_screen.dart';
+import 'package:netsim_mobile/features//logs/presentation/screens/logs_list_screen.dart';
+import 'package:netsim_mobile/features//onboarding/presentation/screens/onboarding.dart';
+import 'package:netsim_mobile/features//devices/presentation/screens/device_list_screen.dart';
 
 class BottomNavWidget extends StatefulWidget {
   const BottomNavWidget({super.key});
@@ -11,8 +11,7 @@ class BottomNavWidget extends StatefulWidget {
 }
 
 class _BottomNavWidgetState extends State<BottomNavWidget> {
-
-    final appScreens =[
+  final appScreens = [
     const Onboarding(),
     const DeviceListScreen(),
     const LatestLogsList(),
@@ -20,13 +19,12 @@ class _BottomNavWidgetState extends State<BottomNavWidget> {
 
   int _currentIndex = 0;
 
-  void onTapped(index){
+  void onTapped(index) {
     setState(() {
       _currentIndex = index;
     });
-
-
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,17 +36,11 @@ class _BottomNavWidgetState extends State<BottomNavWidget> {
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.devices),
-            label: 'Devices',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Logs',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.devices), label: 'Devices'),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Logs'),
         ],
       ),
-      body:appScreens[_currentIndex]
-      );
+      body: appScreens[_currentIndex],
+    );
   }
 }

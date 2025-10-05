@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../models/log_model.dart';
-import '../../providers/logs_provider.dart';
-
+import '../../../../app/models/log_model.dart';
+import '../../../../app/providers/logs_provider.dart';
 
 Color _statusBadgeColor(String? status) {
   if (status == null) return Colors.grey;
@@ -33,7 +32,6 @@ class LatestLogsList extends ConsumerWidget {
         padding: const EdgeInsets.only(top: 5.0),
         child: Column(
           children: [
-          
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: Row(
@@ -50,14 +48,18 @@ class LatestLogsList extends ConsumerWidget {
                                   context: context,
                                   builder: (context) => AlertDialog(
                                     title: const Text('Clear all logs?'),
-                                    content: const Text('This will remove all loaded logs. Continue?'),
+                                    content: const Text(
+                                      'This will remove all loaded logs. Continue?',
+                                    ),
                                     actions: [
                                       TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
                                         child: const Text('Cancel'),
                                       ),
                                       TextButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
                                         child: const Text('Clear'),
                                       ),
                                     ],
@@ -65,14 +67,19 @@ class LatestLogsList extends ConsumerWidget {
                                 );
 
                                 if (confirmed == true) {
-                                  ref.read(latestLogsProvider.notifier).clearAll();
+                                  ref
+                                      .read(latestLogsProvider.notifier)
+                                      .clearAll();
                                 }
                               },
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 17),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 17,
+                          ),
                           minimumSize: const Size(0, 0),
                           visualDensity: VisualDensity.compact,
                           textStyle: Theme.of(context).textTheme.labelSmall,
@@ -81,12 +88,16 @@ class LatestLogsList extends ConsumerWidget {
                       ),
 
                       ElevatedButton(
-                        onPressed: () => ref.read(latestLogsProvider.notifier).loadMore(),
+                        onPressed: () =>
+                            ref.read(latestLogsProvider.notifier).loadMore(),
                         style: ElevatedButton.styleFrom(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 17),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 17,
+                          ),
                           minimumSize: const Size(0, 0),
                           visualDensity: VisualDensity.compact,
                           textStyle: Theme.of(context).textTheme.labelSmall,
@@ -119,11 +130,14 @@ class LatestLogsList extends ConsumerWidget {
                                 // content column
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         log.eventTypeCapitalized,
-                                        style: Theme.of(context).textTheme.titleMedium,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium,
                                       ),
                                       const SizedBox(height: 6),
                                       Text(log.message),
@@ -138,10 +152,14 @@ class LatestLogsList extends ConsumerWidget {
                                           ),
                                           const SizedBox(width: 40),
                                           Text(
-                                            DateFormat('h:mm a').format(log.timestamp.toLocal()),
+                                            DateFormat(
+                                              'h:mm a',
+                                            ).format(log.timestamp.toLocal()),
                                             overflow: TextOverflow.ellipsis,
                                             textAlign: TextAlign.right,
-                                            style: Theme.of(context).textTheme.bodySmall,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
                                           ),
                                         ],
                                       ),
@@ -149,7 +167,6 @@ class LatestLogsList extends ConsumerWidget {
                                   ),
                                 ),
 
-                  
                                 Container(
                                   margin: const EdgeInsets.only(left: 12),
                                   width: 20,
@@ -166,9 +183,10 @@ class LatestLogsList extends ConsumerWidget {
                                     child: Icon(
                                       log.status.toLowerCase() == 'online'
                                           ? Icons.check
-                                          : log.status.toLowerCase() == 'offline'
-                                              ? Icons.close
-                                              : Icons.error,
+                                          : log.status.toLowerCase() ==
+                                                'offline'
+                                          ? Icons.close
+                                          : Icons.error,
                                       color: _statusBadgeColor(log.status),
                                       size: 15,
                                     ),
