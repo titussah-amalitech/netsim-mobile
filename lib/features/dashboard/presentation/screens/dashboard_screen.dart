@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:netsim_mobile/shared/widgets/theme_toggle_button.dart';
+import 'package:netsim_mobile/core/widgets/theme_toggle_button.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 class DashboardScreen extends StatelessWidget {
