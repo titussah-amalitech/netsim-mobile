@@ -1,5 +1,6 @@
 // scenario/presentation/scenario_list_screen.dart
 import 'package:flutter/material.dart';
+import 'package:netsim_mobile/shared/widgets/theme_toggle_button.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../data/sources/mock_scenarios.dart';
 import '../widgets/difficulty_tag.dart';
@@ -14,7 +15,11 @@ class ScenarioListScreen extends StatelessWidget {
     final theme = ShadTheme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Scenarios")),
+      appBar: AppBar(
+        title: const Text("Scenarios"),
+        centerTitle: true,
+        actions: [ThemeToggleButton()],
+      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: scenarios.length,

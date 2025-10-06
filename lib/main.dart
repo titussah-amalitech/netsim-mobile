@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netsim_mobile/core/providers/theme_provider.dart';
 import 'package:netsim_mobile/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
 import 'package:netsim_mobile/features/scenarios/presentation/game_view.dart';
@@ -9,16 +10,18 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'features/devices/presentation/screens/device_list_screen.dart';
 
-void main() {
-  runApp(ProviderScope(child: MyApp()));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+
     return ShadApp(
       title: 'Network Simulation Game',
       theme: ShadThemeData(
@@ -29,10 +32,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ShadZincColorScheme.dark(),
         brightness: Brightness.dark,
       ),
+      themeMode: themeMode,
       routes: {
-        // "/": (context) => const BottomNavWidget(),
         "dashboard": (context) => DashboardScreen(),
-        // 'new-device': (context) => const NewDevicePage(),
         "/": (context) => const Onboarding(),
         "/game": (context) => const GameView(),
         "/dashboard": (context) => const DashboardScreen(),

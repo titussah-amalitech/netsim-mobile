@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netsim_mobile/shared/widgets/theme_toggle_button.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -7,7 +8,11 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Network Dashboard"), centerTitle: true),
+      appBar: AppBar(
+        title: const Text("Network Dashboard"),
+        actions: [ThemeToggleButton()],
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

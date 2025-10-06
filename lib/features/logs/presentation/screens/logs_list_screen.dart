@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:netsim_mobile/features/logs/data/models/log_model.dart';
 import 'package:netsim_mobile/features/logs/logic/logs_provider.dart';
+import 'package:netsim_mobile/shared/widgets/theme_toggle_button.dart';
 
 Color _statusBadgeColor(String? status) {
   if (status == null) return Colors.grey;
@@ -26,7 +27,11 @@ class LatestLogsList extends ConsumerWidget {
     final List<LogModel> logs = ref.watch(latestLogsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Logs")),
+      appBar: AppBar(
+        title: const Text("Logs"),
+        centerTitle: true,
+        actions: [ThemeToggleButton()],
+      ),
 
       body: Padding(
         padding: const EdgeInsets.only(top: 5.0),
