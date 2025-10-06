@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'scenario_device.dart';
-import 'scenario_metadata.dart';
+import 'package:netsim_mobile/features/devices/data/models/device_model.dart';
+import 'package:netsim_mobile/features/scenarios/data/models/scenario_metadata.dart';
 
 class Scenario {
   final String name;

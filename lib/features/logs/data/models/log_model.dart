@@ -1,4 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
 class LogModel {
@@ -57,19 +56,29 @@ class LogModel {
     final String id = idVal is String ? idVal : (idVal?.toString() ?? '');
 
     final deviceVal = map['device'];
-    final String device = deviceVal is String ? deviceVal : (deviceVal?.toString() ?? '');
+    final String device = deviceVal is String
+        ? deviceVal
+        : (deviceVal?.toString() ?? '');
 
     final deviceTypeVal = map['deviceType'] ?? map['device_type'];
-    final String deviceType = deviceTypeVal is String ? deviceTypeVal : (deviceTypeVal?.toString() ?? '');
+    final String deviceType = deviceTypeVal is String
+        ? deviceTypeVal
+        : (deviceTypeVal?.toString() ?? '');
 
     final eventTypeVal = map['eventType'] ?? map['event_type'];
-    final String eventType = eventTypeVal is String ? eventTypeVal : (eventTypeVal?.toString() ?? '');
+    final String eventType = eventTypeVal is String
+        ? eventTypeVal
+        : (eventTypeVal?.toString() ?? '');
 
     final messageVal = map['message'];
-    final String message = messageVal is String ? messageVal : (messageVal?.toString() ?? '');
+    final String message = messageVal is String
+        ? messageVal
+        : (messageVal?.toString() ?? '');
 
     final statusVal = map['status'];
-    final String status = statusVal is String ? statusVal : (statusVal?.toString() ?? '');
+    final String status = statusVal is String
+        ? statusVal
+        : (statusVal?.toString() ?? '');
 
     // timestamp can be ISO string or epoch millis (int)
     DateTime timestamp;
@@ -111,7 +120,8 @@ class LogModel {
 
   String toJson() => json.encode(toMap());
 
-  factory LogModel.fromJson(String source) => LogModel.fromMap(json.decode(source) as Map<String, dynamic>);
+  factory LogModel.fromJson(String source) =>
+      LogModel.fromMap(json.decode(source) as Map<String, dynamic>);
 
   @override
   String toString() {
@@ -121,25 +131,24 @@ class LogModel {
   @override
   bool operator ==(covariant LogModel other) {
     if (identical(this, other)) return true;
-  
-    return 
-      other.id == id &&
-      other.device == device &&
-      other.deviceType == deviceType &&
-      other.eventType == eventType &&
-      other.message == message &&
-      other.status == status &&
-      other.timestamp == timestamp;
+
+    return other.id == id &&
+        other.device == device &&
+        other.deviceType == deviceType &&
+        other.eventType == eventType &&
+        other.message == message &&
+        other.status == status &&
+        other.timestamp == timestamp;
   }
 
   @override
   int get hashCode {
     return id.hashCode ^
-      device.hashCode ^
-      deviceType.hashCode ^
-      eventType.hashCode ^
-      message.hashCode ^
-      status.hashCode ^
-      timestamp.hashCode;
+        device.hashCode ^
+        deviceType.hashCode ^
+        eventType.hashCode ^
+        message.hashCode ^
+        status.hashCode ^
+        timestamp.hashCode;
   }
 }

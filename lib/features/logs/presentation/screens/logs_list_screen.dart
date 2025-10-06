@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../../../app/models/log_model.dart';
-import '../../../../app/providers/logs_provider.dart';
+import 'package:intl/intl.dart' show DateFormat;
+import 'package:netsim_mobile/features/logs/data/models/log_model.dart';
+import 'package:netsim_mobile/features/logs/logic/logs_provider.dart';
 
 Color _statusBadgeColor(String? status) {
   if (status == null) return Colors.grey;

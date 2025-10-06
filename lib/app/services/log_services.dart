@@ -1,25 +1,24 @@
-
-
-import 'package:netsim_mobile/app/models/log_model.dart';
+import 'package:netsim_mobile/features/logs/data/models/log_model.dart';
 import 'package:netsim_mobile/app/dummy_data/dummy_logs.dart';
 
 class LogServices {
-   /*static final dio = Dio(                    
+  /*static final dio = Dio(
     BaseOptions(
       baseUrl: 'http://10.0.2.2:1011/api/', // Replace with your API base URL
     ),
   );
 */
- static Future<List<LogModel>> fetchLogs() async {
+  static Future<List<LogModel>> fetchLogs() async {
     await Future.delayed(const Duration(milliseconds: 10));
     try {
-      return logsList.map((log) => LogModel.fromMap(Map<String, dynamic>.from(log))).toList();
+      return logsList
+          .map((log) => LogModel.fromMap(Map<String, dynamic>.from(log)))
+          .toList();
     } catch (_) {
       return <LogModel>[];
     }
   }
 
- 
   static Future<LogModel?> fetchLatestLog() async {
     try {
       final all = await fetchLogs();

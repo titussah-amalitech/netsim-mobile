@@ -1,12 +1,10 @@
-
-
 import 'package:netsim_mobile/app/services/log_services.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:riverpod/legacy.dart';
 import 'package:riverpod/riverpod.dart';
-import '../models/log_model.dart';
-import '../models/log_state_model.dart';
+import '../data/models/log_model.dart';
+import '../data/models/log_state_model.dart';
 
 final logsFutureProvider = FutureProvider<List<LogModel>>((ref) async {
   var logs = await LogServices.fetchLogs();
@@ -14,34 +12,39 @@ final logsFutureProvider = FutureProvider<List<LogModel>>((ref) async {
   return logs;
 });
 
-
-
 class LogNotifier extends StateNotifier<LogState> {
   LogNotifier() : super(LogState(logs: [], filteredLogs: [], page: 10));
   void setLogs(List<LogModel> logs) {
     state = state.copyWith(logs: logs);
     applyFilters();
   }
-  
+
   void applyFilters() {
     List<LogModel> filtered = state.logs;
 
     if (state.statusFilter != null && state.statusFilter!.isNotEmpty) {
-      filtered = filtered.where((log) => log.status == state.statusFilter).toList();
+      filtered = filtered
+          .where((log) => log.status == state.statusFilter)
+          .toList();
     }
 
     if (state.eventTypeFilter != null && state.eventTypeFilter!.isNotEmpty) {
-      filtered = filtered.where((log) => log.eventType == state.eventTypeFilter).toList();
+      filtered = filtered
+          .where((log) => log.eventType == state.eventTypeFilter)
+          .toList();
     }
 
     state = state.copyWith(filteredLogs: filtered);
   }
 }
+
 final logsProvider = StateNotifierProvider<LogNotifier, LogState>((ref) {
   return LogNotifier();
 });
 
-final latestLogProvider = StateNotifierProvider<LatestLogNotifier, LogModel?>((ref) {
+final latestLogProvider = StateNotifierProvider<LatestLogNotifier, LogModel?>((
+  ref,
+) {
   final notifier = LatestLogNotifier(ref);
   ref.onDispose(() => notifier.dispose());
   return notifier;
@@ -66,11 +69,9 @@ class LatestLogNotifier extends StateNotifier<LogModel?> {
         state = null;
       }
     } catch (e) {
-     
       debugPrint('Error fetching latest log: $e');
     }
   }
-
 
   @override
   void dispose() {
@@ -79,11 +80,12 @@ class LatestLogNotifier extends StateNotifier<LogModel?> {
   }
 }
 
-final latestLogsProvider = StateNotifierProvider<LatestLogsNotifier, List<LogModel>>((ref) {
-  final notifier = LatestLogsNotifier(ref);
-  ref.onDispose(() => notifier.dispose());
-  return notifier;
-});
+final latestLogsProvider =
+    StateNotifierProvider<LatestLogsNotifier, List<LogModel>>((ref) {
+      final notifier = LatestLogsNotifier(ref);
+      ref.onDispose(() => notifier.dispose());
+      return notifier;
+    });
 
 class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
   final Ref ref;
@@ -105,7 +107,6 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
       final seed = all.take(initialSeedCount).toList();
       state = seed;
     } catch (e) {
-     
       debugPrint('Error seeding initial logs: $e');
     }
   }
@@ -119,7 +120,6 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
         state = [latest, ...state];
       }
     } catch (e) {
-
       debugPrint('Error fetching latest for list: $e');
     }
   }
@@ -129,7 +129,6 @@ class LatestLogsNotifier extends StateNotifier<List<LogModel>> {
     state = <LogModel>[];
   }
 
- 
   Future<void> loadMore({int count = 20}) async {
     try {
       final all = await LogServices.fetchLogs();

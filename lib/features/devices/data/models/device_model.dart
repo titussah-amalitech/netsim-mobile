@@ -1,6 +1,6 @@
-import 'scenario_position.dart';
-import 'scenario_parameters.dart';
-import 'scenario_status.dart';
+import 'package:netsim_mobile/features/devices/data/models/device_parameters.dart';
+import 'package:netsim_mobile/features/devices/data/models/device_position.dart';
+import 'package:netsim_mobile/features/devices/data/models/device_status.dart';
 
 class Device {
   final String id;

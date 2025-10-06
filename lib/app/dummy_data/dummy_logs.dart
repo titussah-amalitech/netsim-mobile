@@ -1,5 +1,4 @@
-// Dummy log data for testing purposes
-List<Map<String, dynamic>> logsList= [
+List<Map<String, dynamic>> logsList = [
   {
     "_id": "1",
     "device": "Device_101",

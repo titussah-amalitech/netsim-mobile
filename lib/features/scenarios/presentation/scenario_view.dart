@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import '../logic/scenario.dart';
+import '../data/models/scenario.dart';
 
 class ScenarioViewScreen extends StatelessWidget {
   final Scenario scenario;

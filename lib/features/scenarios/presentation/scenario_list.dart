@@ -1,7 +1,9 @@
 // scenario/presentation/scenario_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import '../../devices/data/models/device_model.dart';
 import '../data/mock_scenarios.dart';
+import '../../devices/presentation/screens/device_list_screen.dart';
 
 class ScenarioListScreen extends StatelessWidget {
   const ScenarioListScreen({super.key});
@@ -26,6 +28,24 @@ class ScenarioListScreen extends StatelessWidget {
               description: Text(
                 scenario.metadata.description,
                 style: theme.textTheme.muted,
+              ),
+              footer: Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ShadButton(
+                      child: const Text('Show Devices'),
+                      onPressed: () {
+                        _showDevicesModal(
+                          context,
+                          scenario.devices,
+                          scenario.name,
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -71,6 +91,44 @@ class ScenarioListScreen extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  // Shows devices in a modal dialog
+  void _showDevicesModal(
+    BuildContext context,
+    List<Device> devices,
+    String scenarioName,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 600, maxWidth: 600),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppBar(
+                  title: Text('$scenarioName Devices'),
+                  centerTitle: true,
+                  automaticallyImplyLeading: false,
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                Flexible(child: DeviceListScreen(devices: devices)),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

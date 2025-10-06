@@ -1,4 +1,9 @@
-import '../logic/scenario.dart';
+import '../../devices/data/models/device_model.dart';
+import '../../devices/data/models/device_parameters.dart';
+import '../../devices/data/models/device_position.dart';
+import '../../devices/data/models/device_status.dart';
+import 'models/scenario.dart';
+import 'models/scenario_model.dart';
 
 class MockScenarios {
   static List<Scenario> scenarios = [

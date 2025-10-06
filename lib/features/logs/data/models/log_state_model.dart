@@ -1,6 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 
-import 'package:netsim_mobile/app/models/log_model.dart';
+import 'package:netsim_mobile/features/logs/data/models/log_model.dart';
 
 class LogState {
   final List<LogModel> logs;
@@ -15,7 +15,6 @@ class LogState {
     this.statusFilter,
     this.eventTypeFilter,
   });
-
 
   LogState copyWith({
     List<LogModel>? logs,
