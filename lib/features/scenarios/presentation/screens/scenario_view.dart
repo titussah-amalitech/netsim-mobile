@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:netsim_mobile/features/devices/data/models/device_model.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../devices/presentation/screens/device_list_screen.dart';
 import '../widgets/device_overview_item.dart';
 import '../widgets/metadata_row.dart';
@@ -53,7 +53,9 @@ class ScenarioViewScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Created At',
-                      value: _formatDate(scenario.metadata.createdAt),
+                      value: DateFormatter.formatDate(
+                        scenario.metadata.createdAt,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
@@ -76,7 +78,13 @@ class ScenarioViewScreen extends StatelessWidget {
                   width: double.infinity,
                   child: const Text('Show Devices Details'),
                   onPressed: () {
-                    _showDevicesModal(context, scenario.devices, scenario.name);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            DeviceListScreen(devices: scenario.devices),
+                      ),
+                    );
                   },
                 ),
               ),
@@ -100,47 +108,4 @@ class ScenarioViewScreen extends StatelessWidget {
       ),
     );
   }
-
-  void _showDevicesModal(
-    BuildContext context,
-    List<Device> devices,
-    String scenarioName,
-  ) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Container(
-            constraints: const BoxConstraints(maxHeight: 600, maxWidth: 600),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppBar(
-                  title: Text('$scenarioName - Devices'),
-                  centerTitle: true,
-                  automaticallyImplyLeading: false,
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                Flexible(child: DeviceListScreen(devices: devices)),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${_padZero(dt.month)}-${_padZero(dt.day)} ${_padZero(dt.hour)}:${_padZero(dt.minute)}';
-  }
-
-  String _padZero(int v) => v.toString().padLeft(2, '0');
 }
