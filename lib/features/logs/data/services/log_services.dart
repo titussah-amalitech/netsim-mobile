@@ -1,5 +1,5 @@
 import 'package:netsim_mobile/features/logs/data/models/log_model.dart';
-import 'package:netsim_mobile/app/dummy_data/dummy_logs.dart';
+import 'package:netsim_mobile/features/logs/data/sources/dummy_logs.dart';
 
 class LogServices {
   /*static final dio = Dio(

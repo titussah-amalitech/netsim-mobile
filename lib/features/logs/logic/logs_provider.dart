@@ -1,4 +1,4 @@
-import 'package:netsim_mobile/app/services/log_services.dart';
+import 'package:netsim_mobile/features/logs/data/services/log_services.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:riverpod/legacy.dart';

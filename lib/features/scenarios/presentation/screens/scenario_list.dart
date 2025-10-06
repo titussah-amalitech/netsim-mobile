@@ -1,7 +1,7 @@
 // scenario/presentation/scenario_list_screen.dart
 import 'package:flutter/material.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import '../../data/mock_scenarios.dart';
+import '../../data/sources/mock_scenarios.dart';
 import '../widgets/difficulty_tag.dart';
 import 'scenario_view.dart';
 
