@@ -1,22 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
+import 'package:netsim_mobile/features/scenarios/presentation/widgets/scenario_edit_dialog.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../devices/presentation/screens/device_list_screen.dart';
 import '../widgets/device_overview_item.dart';
 import '../widgets/metadata_row.dart';
+import '../../logic/scenarios_provider.dart';
 
-class ScenarioViewScreen extends StatelessWidget {
+class ScenarioViewScreen extends ConsumerWidget {
   final Scenario scenario;
 
   const ScenarioViewScreen({super.key, required this.scenario});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = ShadTheme.of(context);
+    // Watch the provider to get the up-to-date version of this scenario.
+    final scenarios = ref.watch(scenariosProvider);
+    final current = scenarios.firstWhere(
+      (s) => identical(s, scenario) || (s.name == scenario.name && s.metadata.createdAt == scenario.metadata.createdAt),
+      orElse: () => scenario,
+    );
 
     return Scaffold(
-      appBar: AppBar(title: Text(scenario.name)),
+      appBar: AppBar(title: Text(current.name)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -33,34 +42,51 @@ class ScenarioViewScreen extends StatelessWidget {
                   children: [
                     MetadataRow(
                       label: 'Description',
-                      value: scenario.metadata.description,
+                      value: current.metadata.description,
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Difficulty',
-                      value: scenario.difficulty.toUpperCase(),
+                      value: current.difficulty.toUpperCase(),
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Time Limit',
-                      value: '${scenario.timeLimit} seconds',
+                      value: '${current.timeLimit} seconds',
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Created By',
-                      value: scenario.metadata.createdBy,
+                      value: current.metadata.createdBy,
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Created At',
                       value: DateFormatter.formatDate(
-                        scenario.metadata.createdAt,
+                        current.metadata.createdAt,
                       ),
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Total Devices',
-                      value: scenario.devices.length.toString(),
+                      value: current.devices.length.toString(),
+                    ),
+                    SizedBox(height: 10),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(350, 40),
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        ScenarioEditDialog().showEditDialog(context, current);
+                      },
+                      child: Text(
+                        "Edit Scenario",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -81,8 +107,7 @@ class ScenarioViewScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            DeviceListScreen(devices: scenario.devices),
+                        builder: (context) => DeviceListScreen(devices: current.devices, scenario: current),
                       ),
                     );
                   },
@@ -90,14 +115,14 @@ class ScenarioViewScreen extends StatelessWidget {
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                child: scenario.devices.isEmpty
+                child: current.devices.isEmpty
                     ? Text(
                         'No devices in this scenario',
                         style: theme.textTheme.muted,
                       )
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: scenario.devices.map((device) {
+                        children: current.devices.map((device) {
                           return DeviceOverviewItem(device: device);
                         }).toList(),
                       ),

@@ -2,8 +2,8 @@ import '../../../devices/data/models/device_model.dart';
 import '../../../devices/data/models/device_parameters.dart';
 import '../../../devices/data/models/device_position.dart';
 import '../../../devices/data/models/device_status.dart';
-import '../models/scenario.dart';
 import '../models/scenario_model.dart';
+import '../models/scenario_metadata.dart';
 
 class MockScenarios {
   static List<Scenario> scenarios = [
@@ -14,9 +14,26 @@ class MockScenarios {
       devices: [
         Device(
           id: "1",
+          type: "Router",
           position: Position(x: 0, y: 0),
           parameters: Parameters(
             pingInterval: 30,
+            latencyThreshold: 100,
+            failureProbability: 0.1,
+            trafficLoad: 10,
+          ),
+          status: Status(
+            online: true,
+            latency: 20,
+            lastChecked: DateTime.now(),
+          ),
+        ),
+         Device(
+          id: "8",
+          type: "Sever",
+          position: Position(x: 5, y: 5),
+          parameters: Parameters(
+            pingInterval: 20,
             latencyThreshold: 100,
             failureProbability: 0.1,
             trafficLoad: 10,
@@ -41,6 +58,7 @@ class MockScenarios {
       devices: [
         Device(
           id: "2",
+          type: "Switch",
           position: Position(x: 10, y: 20),
           parameters: Parameters(
             pingInterval: 15,
@@ -56,6 +74,7 @@ class MockScenarios {
         ),
         Device(
           id: "3",
+          type: "Firewall",
           position: Position(x: 5, y: 15),
           parameters: Parameters(
             pingInterval: 20,
@@ -69,11 +88,88 @@ class MockScenarios {
             lastChecked: DateTime.now(),
           ),
         ),
+         Device(
+          id: "9",
+          type: "PC",
+          position: Position(x: 0, y: 0),
+          parameters: Parameters(
+            pingInterval: 30,
+            latencyThreshold: 100,
+            failureProbability: 0.1,
+            trafficLoad: 8,
+          ),
+          status: Status(
+            online: true,
+            latency: 20,
+            lastChecked: DateTime.now(),
+          ),
+        ),
       ],
       metadata: Metadata(
         createdBy: "trainer",
         createdAt: DateTime.now(),
         description: "Challenging routing exercise with failures.",
+      ),
+    ),
+    Scenario(
+      name: "Campus Wireless Network",
+      difficulty: "medium",
+      timeLimit: 900,
+      devices: [
+        Device(
+          id: "4",
+          type: "PC",
+          position: Position(x: 8, y: 10),
+          parameters: Parameters(
+            pingInterval: 25,
+            latencyThreshold: 90,
+            failureProbability: 0.08,
+            trafficLoad: 40,
+          ),
+          status: Status(
+            online: true,
+            latency: 25,
+            lastChecked: DateTime.now(),
+          ),
+        ),
+        Device(
+          id: "5",
+          type: "Firewall",
+          position: Position(x: 12, y: 18),
+          parameters: Parameters(
+            pingInterval: 20,
+            latencyThreshold: 70,
+            failureProbability: 0.12,
+            trafficLoad: 55,
+          ),
+          status: Status(
+            online: true,
+            latency: 30,
+            lastChecked: DateTime.now(),
+          ),
+        ),
+         Device(
+          id: "1",
+          type: "Switch",
+          position: Position(x: 0, y: 0),
+          parameters: Parameters(
+            pingInterval: 30,
+            latencyThreshold: 100,
+            failureProbability: 0.1,
+            trafficLoad: 10,
+          ),
+          status: Status(
+            online: true,
+            latency: 20,
+            lastChecked: DateTime.now(),
+          ),
+        ),
+      ],
+      metadata: Metadata(
+        createdBy: "network_admin",
+        createdAt: DateTime.now(),
+        description:
+            "Scenario simulating a wireless network environment across campus buildings.",
       ),
     ),
   ];

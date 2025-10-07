@@ -2,16 +2,17 @@
 import 'package:flutter/material.dart';
 import 'package:netsim_mobile/core/widgets/theme_toggle_button.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import '../../data/sources/mock_scenarios.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../logic/scenarios_provider.dart';
 import '../widgets/difficulty_tag.dart';
 import 'scenario_view.dart';
 
-class ScenarioListScreen extends StatelessWidget {
+class ScenarioListScreen extends ConsumerWidget {
   const ScenarioListScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final scenarios = MockScenarios.scenarios;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scenarios = ref.watch(scenariosProvider);
     final theme = ShadTheme.of(context);
 
     return Scaffold(
