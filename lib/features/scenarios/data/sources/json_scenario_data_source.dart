@@ -16,13 +16,16 @@ class JsonScenarioDataSource {
         print("Warning: No scenario files found in assets/data/scenarios/");
         return [];
       }
-      final List<Future<Scenario>> futureScenarios = scenarioPaths.map((
-        path,
-      ) async {
+
+      final List<Scenario> scenarios = [];
+      for (final path in scenarioPaths) {
         final jsonString = await rootBundle.loadString(path);
-        return Scenario.fromJsonString(jsonString);
-      }).toList();
-      final scenarios = await Future.wait(futureScenarios);
+        final scenario = Scenario.fromJsonString(jsonString);
+
+        final updatedScenario = await readScenarioFromDocuments(scenario.name);
+        scenarios.add(updatedScenario ?? scenario);
+      }
+
       return scenarios;
     } catch (e) {
       print("Error loading scenarios from assets: $e");
@@ -41,10 +44,19 @@ class JsonScenarioDataSource {
       RegExp(r'[^a-zA-Z0-9_\-]'),
       '',
     );
-    return File('$path/$sanitizedName.json');
+    return File('$path/scenarios/$sanitizedName.json');
+  }
+
+  Future<void> _ensureDirectoryExists() async {
+    final path = await _localPath;
+    final directory = Directory('$path/scenarios');
+    if (!await directory.exists()) {
+      await directory.create(recursive: true);
+    }
   }
 
   Future<File> writeScenarioToDocuments(Scenario scenario) async {
+    await _ensureDirectoryExists();
     final file = await _localFile(scenario.name);
     final jsonString = scenario.toJsonString(pretty: true);
     return file.writeAsString(jsonString);
@@ -61,6 +73,27 @@ class JsonScenarioDataSource {
     } catch (e) {
       print("Error reading scenario '$scenarioName' from documents: $e");
       return null;
+    }
+  }
+
+  Future<File> updateScenario(Scenario scenario) async {
+    await _ensureDirectoryExists();
+    final file = await _localFile(scenario.name);
+    final jsonString = scenario.toJsonString(pretty: true);
+    return file.writeAsString(jsonString);
+  }
+
+  Future<bool> deleteScenario(String scenarioName) async {
+    try {
+      final file = await _localFile(scenarioName);
+      if (await file.exists()) {
+        await file.delete();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print("Error deleting scenario '$scenarioName': $e");
+      return false;
     }
   }
 }
