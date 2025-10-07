@@ -71,6 +71,9 @@ class _DeviceEditDialogContentState extends State<_DeviceEditDialogContent> {
   Widget build(BuildContext context) {
     final current = widget.device;
     return AlertDialog(
+      shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
       title: Text('Edit Device: ${current.type}'),
       content: SingleChildScrollView(
         child: Form(
