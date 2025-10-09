@@ -5,11 +5,11 @@ import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart
 import 'package:netsim_mobile/features/scenarios/logic/scenarios_provider.dart' as scenarios_provider_import;
 
 class DeviceEditDialog {
-  Future<void> showEditDialog(BuildContext parentContext, Device current, {Scenario? parentScenario}) async {
+  Future<void> showEditDialog(BuildContext parentContext, Device current, {Scenario? parentScenario, int? deviceIndex}) async {
     await showDialog<void>(
       context: parentContext,
       barrierDismissible: false,
-      builder: (context) => _DeviceEditDialogContent(parentContext: parentContext, device: current, parentScenario: parentScenario),
+      builder: (context) => _DeviceEditDialogContent(parentContext: parentContext, device: current, parentScenario: parentScenario, deviceIndex: deviceIndex),
     );
   }
 }
@@ -18,8 +18,8 @@ class _DeviceEditDialogContent extends StatefulWidget {
   final BuildContext parentContext;
   final Device device;
   final Scenario? parentScenario;
-
-  const _DeviceEditDialogContent({ required this.parentContext, required this.device, this.parentScenario});
+  final int? deviceIndex;
+  const _DeviceEditDialogContent({ required this.parentContext, required this.device, this.parentScenario, this.deviceIndex});
 
   @override
   State<_DeviceEditDialogContent> createState() => _DeviceEditDialogContentState();
@@ -238,13 +238,17 @@ class _DeviceEditDialogContentState extends State<_DeviceEditDialogContent> {
               final scenarios = container.read(scenarios_provider_import.scenariosProvider);
 
               if (widget.parentScenario != null) {
-                final owner = widget.parentScenario!;
-                final devices = [...owner.devices];
-                final devIdx = devices.indexWhere((d) => d.id == current.id);
-                if (devIdx != -1) {
-                  devices[devIdx] = updatedDevice;
-                  final updatedScenario = owner.copyWith(devices: devices);
-                  notifier.updateScenario(owner, updatedScenario);
+               
+                final ownerIdx = scenarios.indexWhere((s) => s.name == widget.parentScenario!.name && s.metadata.createdAt == widget.parentScenario!.metadata.createdAt);
+                if (ownerIdx != -1) {
+                  final owner = scenarios[ownerIdx];
+                  final devices = [...owner.devices];
+                  final devIdx = devices.indexWhere((d) => d.id == current.id);
+                  if (devIdx != -1) {
+                    devices[devIdx] = updatedDevice;
+                    final updatedScenario = owner.copyWith(devices: devices);
+                    notifier.updateScenario(owner, updatedScenario);
+                  }
                 }
               } else {
                 // find scenario that contains this device by id

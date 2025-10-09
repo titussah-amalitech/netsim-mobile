@@ -29,7 +29,7 @@ class MockScenarios {
           ),
         ),
          Device(
-          id: "8",
+          id: "2",
           type: "Sever",
           position: Position(x: 5, y: 5),
           parameters: Parameters(
@@ -57,7 +57,7 @@ class MockScenarios {
       timeLimit: 1200,
       devices: [
         Device(
-          id: "2",
+          id: "3",
           type: "Switch",
           position: Position(x: 10, y: 20),
           parameters: Parameters(
@@ -73,7 +73,7 @@ class MockScenarios {
           ),
         ),
         Device(
-          id: "3",
+          id: "4",
           type: "Firewall",
           position: Position(x: 5, y: 15),
           parameters: Parameters(
@@ -89,7 +89,7 @@ class MockScenarios {
           ),
         ),
          Device(
-          id: "9",
+          id: "5",
           type: "PC",
           position: Position(x: 0, y: 0),
           parameters: Parameters(
@@ -117,7 +117,7 @@ class MockScenarios {
       timeLimit: 900,
       devices: [
         Device(
-          id: "4",
+          id: "6",
           type: "PC",
           position: Position(x: 8, y: 10),
           parameters: Parameters(
@@ -133,7 +133,7 @@ class MockScenarios {
           ),
         ),
         Device(
-          id: "5",
+          id: "7",
           type: "Firewall",
           position: Position(x: 12, y: 18),
           parameters: Parameters(
@@ -149,7 +149,7 @@ class MockScenarios {
           ),
         ),
          Device(
-          id: "1",
+          id: "8",
           type: "Switch",
           position: Position(x: 0, y: 0),
           parameters: Parameters(

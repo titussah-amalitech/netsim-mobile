@@ -148,8 +148,9 @@ class ScenarioEditDialog {
                                         scenario.metadata.createdAt,
                               );
                             }
-                            if (idx != -1)
+                            if (idx != -1) {
                               MockScenarios.scenarios[idx] = updatedScenario;
+                            }
                           }
 
                           Navigator.of(context).pop();

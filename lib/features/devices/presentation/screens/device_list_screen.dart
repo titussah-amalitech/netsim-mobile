@@ -55,8 +55,8 @@ class DeviceListScreen extends ConsumerWidget {
                     ),
               trailing: ElevatedButton(
                   onPressed: () {
-                    DeviceEditDialog().showEditDialog(context, device, parentScenario: scenario);
-                  },  
+                        DeviceEditDialog().showEditDialog(context, device, parentScenario: scenario, deviceIndex: index);
+                      },  
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(60, 30),
                             backgroundColor: Colors.black,
