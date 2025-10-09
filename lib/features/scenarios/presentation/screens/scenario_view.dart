@@ -4,8 +4,10 @@ import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart
 import 'package:netsim_mobile/features/scenarios/presentation/widgets/scenario_edit_dialog.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/utils/snackbar_helper.dart';
 import '../../../devices/presentation/screens/device_list_screen.dart';
 import '../widgets/device_overview_item.dart';
+import '../widgets/edit_scenario_modal.dart';
 import '../widgets/metadata_row.dart';
 import '../../logic/scenarios_provider.dart';
 
