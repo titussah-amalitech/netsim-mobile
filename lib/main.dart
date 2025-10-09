@@ -40,7 +40,7 @@ class MyApp extends ConsumerWidget {
         "/dashboard": (context) => const DashboardScreen(),
         "/scenario": (context) => const ScenarioListScreen(),
         "/logs": (context) => const LatestLogsList(),
-        "/devices": (context) => DeviceListScreen(devices: const []),
+  "/devices": (context) => DeviceListScreen(devices: const [], scenario: null),
       },
     );
   }

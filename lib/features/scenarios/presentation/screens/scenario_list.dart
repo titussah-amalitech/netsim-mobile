@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/core/widgets/theme_toggle_button.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import '../providers/scenario_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../logic/scenarios_provider.dart';
 import '../widgets/difficulty_tag.dart';
 import 'scenario_view.dart';
 
@@ -12,7 +13,7 @@ class ScenarioListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scenariosAsync = ref.watch(scenariosProvider);
+    final scenarios = ref.watch(scenariosProvider);
     final theme = ShadTheme.of(context);
 
     return Scaffold(

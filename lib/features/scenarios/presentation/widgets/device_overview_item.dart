@@ -31,7 +31,7 @@ class DeviceOverviewItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ID: ${device.id}',
+                  'Type: ${device.type}',
                   style: theme.textTheme.p.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
