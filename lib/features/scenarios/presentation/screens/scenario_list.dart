@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:netsim_mobile/core/widgets/theme_toggle_button.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../logic/scenarios_provider.dart';
+import '../providers/scenario_provider.dart';
 import '../widgets/difficulty_tag.dart';
 import 'scenario_view.dart';
 
@@ -12,7 +12,7 @@ class ScenarioListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scenarios = ref.watch(scenariosProvider);
+    final scenariosAsync = ref.watch(scenariosProvider);
     final theme = ShadTheme.of(context);
 
     return Scaffold(
@@ -21,38 +21,58 @@ class ScenarioListScreen extends ConsumerWidget {
         centerTitle: true,
         actions: [ThemeToggleButton()],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: scenarios.length,
-        itemBuilder: (context, index) {
-          final scenario = scenarios[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        ScenarioViewScreen(scenario: scenario),
+      body: scenariosAsync.when(
+        data: (scenarios) => ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: scenarios.length,
+          itemBuilder: (context, index) {
+            final scenario = scenarios[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ScenarioViewScreen(scenario: scenario),
+                    ),
+                  );
+                },
+                child: ShadCard(
+                  width: double.infinity,
+                  title: Text(scenario.name, style: theme.textTheme.h4),
+                  description: Text(
+                    scenario.metadata.description,
+                    style: theme.textTheme.muted,
                   ),
-                );
-              },
-              child: ShadCard(
-                width: double.infinity,
-                title: Text(scenario.name, style: theme.textTheme.h4),
-                description: Text(
-                  scenario.metadata.description,
-                  style: theme.textTheme.muted,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: DifficultyTag(difficulty: scenario.difficulty),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: DifficultyTag(difficulty: scenario.difficulty),
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error loading scenarios: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.invalidate(scenariosProvider);
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
