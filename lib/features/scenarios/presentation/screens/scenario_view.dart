@@ -1,67 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
+import 'package:netsim_mobile/features/scenarios/presentation/widgets/scenario_edit_dialog.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/utils/snackbar_helper.dart';
 import '../../../devices/presentation/screens/device_list_screen.dart';
 import '../widgets/device_overview_item.dart';
-import '../widgets/edit_scenario_modal.dart';
 import '../widgets/metadata_row.dart';
+import '../../logic/scenarios_provider.dart';
 
-class ScenarioViewScreen extends StatefulWidget {
+class ScenarioViewScreen extends ConsumerWidget {
   final Scenario scenario;
 
   const ScenarioViewScreen({super.key, required this.scenario});
 
   @override
-  State<ScenarioViewScreen> createState() => _ScenarioViewScreenState();
-}
-
-class _ScenarioViewScreenState extends State<ScenarioViewScreen> {
-  late Scenario _currentScenario;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentScenario = widget.scenario;
-  }
-
-  void _showEditModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => EditScenarioModal(scenario: _currentScenario),
-    ).then((result) {
-      if (result != null && result is Map<String, dynamic>) {
-        if (result['success'] == true && result['scenario'] is Scenario) {
-          setState(() {
-            _currentScenario = result['scenario'] as Scenario;
-          });
-          if (context.mounted)
-            SnackBarHelper.showSuccess(
-              context,
-              'Scenario updated successfully',
-            );
-        }
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = ShadTheme.of(context);
+    // Watch the provider to get the up-to-date version of this scenario.
+    final scenarios = ref.watch(scenariosProvider);
+    final current = scenarios.firstWhere(
+      (s) =>
+          identical(s, scenario) ||
+          (s.name == scenario.name &&
+              s.metadata.createdAt == scenario.metadata.createdAt),
+      orElse: () => scenario,
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_currentScenario.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _showEditModal,
-            tooltip: 'Edit Scenario',
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(current.name)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -78,34 +45,51 @@ class _ScenarioViewScreenState extends State<ScenarioViewScreen> {
                   children: [
                     MetadataRow(
                       label: 'Description',
-                      value: _currentScenario.metadata.description,
+                      value: current.metadata.description,
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Difficulty',
-                      value: _currentScenario.difficulty.toUpperCase(),
+                      value: current.difficulty.toUpperCase(),
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Time Limit',
-                      value: '${_currentScenario.timeLimit} seconds',
+                      value: '${current.timeLimit} seconds',
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Created By',
-                      value: _currentScenario.metadata.createdBy,
+                      value: current.metadata.createdBy,
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Created At',
                       value: DateFormatter.formatDate(
-                        _currentScenario.metadata.createdAt,
+                        current.metadata.createdAt,
                       ),
                     ),
                     const SizedBox(height: 8),
                     MetadataRow(
                       label: 'Total Devices',
-                      value: _currentScenario.devices.length.toString(),
+                      value: current.devices.length.toString(),
+                    ),
+                    SizedBox(height: 10),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size(350, 40),
+                        backgroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () {
+                        ScenarioEditDialog().showEditDialog(context, current);
+                      },
+                      child: Text(
+                        "Edit Scenario",
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -126,8 +110,10 @@ class _ScenarioViewScreenState extends State<ScenarioViewScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            DeviceListScreen(devices: _currentScenario.devices),
+                        builder: (context) => DeviceListScreen(
+                          devices: current.devices,
+                          scenario: current,
+                        ),
                       ),
                     );
                   },
@@ -135,14 +121,14 @@ class _ScenarioViewScreenState extends State<ScenarioViewScreen> {
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                child: _currentScenario.devices.isEmpty
+                child: current.devices.isEmpty
                     ? Text(
                         'No devices in this scenario',
                         style: theme.textTheme.muted,
                       )
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _currentScenario.devices.map((device) {
+                        children: current.devices.map((device) {
                           return DeviceOverviewItem(device: device);
                         }).toList(),
                       ),
