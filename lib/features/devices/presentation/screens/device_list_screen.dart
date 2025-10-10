@@ -1,98 +1,156 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:netsim_mobile/features/devices/presentation/screens/device_edit_dialog.dart';
-
 import '../../data/models/device_model.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
-import 'package:netsim_mobile/features/scenarios/logic/scenarios_provider.dart';
+import 'package:netsim_mobile/features/scenarios/presentation/providers/scenario_provider.dart';
+import '../widgets/device_card.dart';
 
-class DeviceListScreen extends ConsumerWidget {
+class DeviceListScreen extends ConsumerStatefulWidget {
   final List<Device> devices;
   final Scenario? scenario;
 
-  /// If [scenario] is provided, devices will be read from and edited on that scenario.
   const DeviceListScreen({super.key, required this.devices, this.scenario});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // If a parent scenario is provided, read its up-to-date value from the provider
-    List<Device> currentDevices = devices;
+  ConsumerState<DeviceListScreen> createState() => _DeviceListScreenState();
+}
+
+class _DeviceListScreenState extends ConsumerState<DeviceListScreen> {
+  int? _editingDeviceIndex;
+  final Map<int, Map<String, dynamic>> _editingValues = {};
+
+  @override
+  Widget build(BuildContext context) {
+    List<Device> currentDevices = widget.devices;
     String appBarTitle = 'Devices';
-    if (scenario != null) {
-      final scenarios = ref.watch(scenariosProvider);
-      final current = scenarios.firstWhere(
-        (s) => identical(s, scenario) || (s.name == scenario!.name && s.metadata.createdAt == scenario!.metadata.createdAt),
-        orElse: () => scenario!,
+
+    if (widget.scenario != null) {
+      final scenariosAsync = ref.watch(scenarioNotifierProvider);
+      currentDevices = scenariosAsync.maybeWhen(
+        data: (scenarios) {
+          final current = scenarios.firstWhere(
+            (s) =>
+                identical(s, widget.scenario) ||
+                (s.name == widget.scenario!.name &&
+                    s.metadata.createdAt ==
+                        widget.scenario!.metadata.createdAt),
+            orElse: () => widget.scenario!,
+          );
+          appBarTitle = current.name;
+          return current.devices;
+        },
+        orElse: () => widget.devices,
       );
-      currentDevices = current.devices;
-      appBarTitle = current.name;
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(appBarTitle)),
+      appBar: AppBar(
+        title: Text(
+          appBarTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        centerTitle: true,
+        scrolledUnderElevation: 0,
+      ),
       body: currentDevices.isEmpty
           ? const Center(child: Text('No devices found'))
           : ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: currentDevices.length,
               itemBuilder: (context, index) {
                 final device = currentDevices[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 2,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(12),
-                    leading: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.devices),
-                        const SizedBox(width: 8),
-                      ],
-                    ),
-              trailing: ElevatedButton(
-                  onPressed: () {
-                        DeviceEditDialog().showEditDialog(context, device, parentScenario: scenario, deviceIndex: index);
-                      },  
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(60, 30),
-                            backgroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            ), 
-                          ),
-                           child:Text('Edit', style: TextStyle(color: Colors.white),),
-                        ),
-                    title: Text(device.type,style: TextStyle(fontWeight: FontWeight.bold),),
-                    subtitle: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Status: ${device.status.online ? "online" : "offline"}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: device.status.online
-                                ? Colors.green
-                                : Colors.red,
-                          ),
-                        ),
-                        Text(
-                          'Position: x=${device.position.x}, y=${device.position.y}',
-                        ),
-                        Text(
-                          'Parameters: pingInterval=${device.parameters.pingInterval}, latencyThreshold=${device.parameters.latencyThreshold}, failureProbability=${device.parameters.failureProbability}, trafficLoad=${device.parameters.trafficLoad}',
-                        ),
-                      ],
-                    ),
-                  ),
+                final isEditing = _editingDeviceIndex == index;
+
+                return DeviceCard(
+                  device: device,
+                  index: index,
+                  isEditing: isEditing,
+                  editingValues: _editingValues[index] ?? {},
+                  onToggleEdit: () => _toggleEditMode(index, device),
+                  onSave: () => _saveDevice(index, device),
+                  onCancel: () => _cancelEdit(index),
+                  onValueChanged: (key, value) =>
+                      _updateEditingValue(index, key, value),
                 );
               },
             ),
     );
+  }
+
+  void _toggleEditMode(int index, Device device) {
+    setState(() {
+      if (_editingDeviceIndex == index) {
+        _editingDeviceIndex = null;
+        _editingValues.remove(index);
+      } else {
+        _editingDeviceIndex = index;
+        // Clamp initial values to ensure they're within valid ranges
+        _editingValues[index] = {
+          'pingInterval': device.parameters.pingInterval.clamp(100, 10000),
+          'latencyThreshold': device.parameters.latencyThreshold.clamp(0, 1000),
+          'failureProbability': device.parameters.failureProbability.clamp(
+            0.0,
+            1.0,
+          ),
+          'trafficLoad': device.parameters.trafficLoad.clamp(0, 100),
+          'online': device.status.online,
+          'x': device.position.x,
+          'y': device.position.y,
+        };
+      }
+    });
+  }
+
+  void _cancelEdit(int index) {
+    setState(() {
+      _editingDeviceIndex = null;
+      _editingValues.remove(index);
+    });
+  }
+
+  void _updateEditingValue(int index, String key, dynamic value) {
+    setState(() {
+      _editingValues[index] = {..._editingValues[index] ?? {}, key: value};
+    });
+  }
+
+  Future<void> _saveDevice(int index, Device device) async {
+    if (widget.scenario == null) return;
+
+    final values = _editingValues[index]!;
+    final updatedDevice = device.copyWith(
+      parameters: device.parameters.copyWith(
+        pingInterval: values['pingInterval'] as int,
+        latencyThreshold: values['latencyThreshold'] as int,
+        failureProbability: values['failureProbability'] as double,
+        trafficLoad: values['trafficLoad'] as int,
+      ),
+      status: device.status.copyWith(online: values['online'] as bool),
+      position: device.position.copyWith(
+        x: values['x'] as int,
+        y: values['y'] as int,
+      ),
+    );
+
+    final updatedDevices = List<Device>.from(widget.scenario!.devices);
+    updatedDevices[index] = updatedDevice;
+
+    final updatedScenario = widget.scenario!.copyWith(devices: updatedDevices);
+
+    try {
+      await ref
+          .read(scenarioNotifierProvider.notifier)
+          .updateScenario(updatedScenario);
+      setState(() {
+        _editingDeviceIndex = null;
+        _editingValues.remove(index);
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update device: $e')));
+      }
+    }
   }
 }
