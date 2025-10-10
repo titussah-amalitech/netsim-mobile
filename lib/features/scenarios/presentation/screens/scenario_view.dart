@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
 import 'package:netsim_mobile/features/scenarios/presentation/widgets/scenario_edit_dialog.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
-import '../../../../core/utils/date_formatter.dart';
-import '../../../devices/presentation/screens/device_list_screen.dart';
-import '../widgets/device_overview_item.dart';
-import '../widgets/metadata_row.dart';
 import '../providers/scenario_provider.dart';
+import '../widgets/difficulty_header_card.dart';
+import '../widgets/stats_carousel.dart';
+import '../widgets/scenario_info_card.dart';
+import '../widgets/devices_overview_card.dart';
 
 class ScenarioViewScreen extends ConsumerWidget {
   final Scenario scenario;
@@ -16,7 +15,6 @@ class ScenarioViewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = ShadTheme.of(context);
     final scenariosAsync = ref.watch(scenarioNotifierProvider);
 
     return scenariosAsync.when(
@@ -30,115 +28,46 @@ class ScenarioViewScreen extends ConsumerWidget {
         );
 
         return Scaffold(
-          appBar: AppBar(title: Text(current.name)),
+          appBar: AppBar(
+            scrolledUnderElevation: 0,
+            title: Text(
+              current.name,
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () {
+                  ScenarioEditDialog().showEditDialog(context, current);
+                },
+              ),
+            ],
+          ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Metadata Card
-                ShadCard(
-                  width: double.infinity,
-                  title: Text('Scenario Details', style: theme.textTheme.h4),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        MetadataRow(
-                          label: 'Description',
-                          value: current.metadata.description,
-                        ),
-                        const SizedBox(height: 8),
-                        MetadataRow(
-                          label: 'Difficulty',
-                          value: current.difficulty.toUpperCase(),
-                        ),
-                        const SizedBox(height: 8),
-                        MetadataRow(
-                          label: 'Time Limit',
-                          value: '${current.timeLimit} seconds',
-                        ),
-                        const SizedBox(height: 8),
-                        MetadataRow(
-                          label: 'Created By',
-                          value: current.metadata.createdBy,
-                        ),
-                        const SizedBox(height: 8),
-                        MetadataRow(
-                          label: 'Created At',
-                          value: DateFormatter.formatDate(
-                            current.metadata.createdAt,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        MetadataRow(
-                          label: 'Total Devices',
-                          value: current.devices.length.toString(),
-                        ),
-                        SizedBox(height: 10),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: Size(350, 40),
-                            backgroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: () {
-                            ScenarioEditDialog().showEditDialog(
-                              context,
-                              current,
-                            );
-                          },
-                          child: Text(
-                            "Edit Scenario",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                DifficultyHeaderCard(difficulty: current.difficulty),
+                const SizedBox(height: 20),
+                ScenarioInfoCard(
+                  name: current.name,
+                  description: current.metadata.description,
                 ),
-                const SizedBox(height: 16),
 
-                // Devices Overview Card
-                ShadCard(
-                  width: double.infinity,
-                  title: Text('Devices Overview', style: theme.textTheme.h4),
-                  footer: Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: ShadButton(
-                      width: double.infinity,
-                      child: const Text('Show Devices Details'),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DeviceListScreen(
-                              devices: current.devices,
-                              scenario: current,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: current.devices.isEmpty
-                        ? Text(
-                            'No devices in this scenario',
-                            style: theme.textTheme.muted,
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: current.devices.map((device) {
-                              return DeviceOverviewItem(device: device);
-                            }).toList(),
-                          ),
-                  ),
+                const SizedBox(height: 20),
+                StatsCarousel(
+                  timeLimit: current.timeLimit,
+                  deviceCount: current.devices.length,
+                  createdAt: current.metadata.createdAt,
+                  createdBy: current.metadata.createdBy,
                 ),
+                const SizedBox(height: 20),
+                // DescriptionCard(description: current.metadata.description),
+                //
+                // const SizedBox(height: 20),
+                DevicesOverviewCard(scenario: current),
               ],
             ),
           ),
