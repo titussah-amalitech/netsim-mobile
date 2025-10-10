@@ -20,7 +20,10 @@ class ScenarioViewScreen extends ConsumerWidget {
     // Watch the provider to get the up-to-date version of this scenario.
     final scenarios = ref.watch(scenariosProvider);
     final current = scenarios.firstWhere(
-      (s) => identical(s, scenario) || (s.name == scenario.name && s.metadata.createdAt == scenario.metadata.createdAt),
+      (s) =>
+          identical(s, scenario) ||
+          (s.name == scenario.name &&
+              s.metadata.createdAt == scenario.metadata.createdAt),
       orElse: () => scenario,
     );
 
@@ -107,7 +110,10 @@ class ScenarioViewScreen extends ConsumerWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DeviceListScreen(devices: current.devices, scenario: current),
+                        builder: (context) => DeviceListScreen(
+                          devices: current.devices,
+                          scenario: current,
+                        ),
                       ),
                     );
                   },
