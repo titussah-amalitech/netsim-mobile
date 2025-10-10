@@ -12,7 +12,7 @@ class ScenarioListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scenariosAsync = ref.watch(scenariosProvider);
+    final scenariosAsync = ref.watch(scenarioNotifierProvider);
     final theme = ShadTheme.of(context);
 
     return Scaffold(
@@ -66,7 +66,7 @@ class ScenarioListScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
-                  ref.invalidate(scenariosProvider);
+                  ref.read(scenarioNotifierProvider.notifier).loadScenarios();
                 },
                 child: const Text('Retry'),
               ),

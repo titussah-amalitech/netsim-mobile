@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/core/providers/theme_provider.dart';
+import 'package:netsim_mobile/core/widgets/root_scaffold.dart';
 import 'package:netsim_mobile/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
 import 'package:netsim_mobile/features/scenarios/presentation/game_view.dart';
@@ -33,6 +34,9 @@ class MyApp extends ConsumerWidget {
         brightness: Brightness.dark,
       ),
       themeMode: themeMode,
+      builder: (context, child) {
+        return RootScaffold(child: child ?? const SizedBox.shrink());
+      },
       routes: {
         "dashboard": (context) => DashboardScreen(),
         "/": (context) => const Onboarding(),
@@ -40,7 +44,8 @@ class MyApp extends ConsumerWidget {
         "/dashboard": (context) => const DashboardScreen(),
         "/scenario": (context) => const ScenarioListScreen(),
         "/logs": (context) => const LatestLogsList(),
-  "/devices": (context) => DeviceListScreen(devices: const [], scenario: null),
+        "/devices": (context) =>
+            DeviceListScreen(devices: const [], scenario: null),
       },
     );
   }
