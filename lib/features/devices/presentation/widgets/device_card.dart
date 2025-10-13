@@ -28,23 +28,6 @@ class DeviceCard extends StatelessWidget {
     required this.onValueChanged,
   });
 
-  Color _getDeviceColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'server':
-        return Colors.blue;
-      case 'router':
-        return Colors.purple;
-      case 'switch':
-        return Colors.green;
-      case 'pc':
-        return Colors.orange;
-      case 'firewall':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

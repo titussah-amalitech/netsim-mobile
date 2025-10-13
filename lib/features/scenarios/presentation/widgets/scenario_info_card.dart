@@ -13,7 +13,7 @@ class ScenarioInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
+    final theme = Theme.of(context);
 
     return ShadCard(
       width: double.infinity,
@@ -24,11 +24,15 @@ class ScenarioInfoCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.green[700], size: 24),
+                Icon(
+                  Icons.info_outline,
+                  color: theme.colorScheme.inverseSurface,
+                  size: 24,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Scenario Information',
-                  style: theme.textTheme.h4?.copyWith(
+                  style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -39,14 +43,14 @@ class ScenarioInfoCard extends StatelessWidget {
               Icons.label_outline,
               'Scenario Name',
               name,
-              Colors.indigo,
+              theme.colorScheme.inverseSurface,
             ),
             const Divider(height: 24),
             _buildInfoRow(
               Icons.description_outlined,
               'Description',
               '$description',
-              Colors.orange,
+              theme.colorScheme.inverseSurface,
             ),
           ],
         ),
@@ -57,15 +61,6 @@ class ScenarioInfoCard extends StatelessWidget {
   Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

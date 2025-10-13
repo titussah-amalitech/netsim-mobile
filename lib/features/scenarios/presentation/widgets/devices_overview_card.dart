@@ -23,11 +23,11 @@ class DevicesOverviewCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.devices, color: Colors.purple[700], size: 24),
+                Icon(Icons.devices, color: theme.colorScheme.primary, size: 24),
                 const SizedBox(width: 8),
                 Text(
                   'Devices Overview',
-                  style: theme.textTheme.h4?.copyWith(
+                  style: theme.textTheme.h4.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -37,7 +37,7 @@ class DevicesOverviewCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.1),
+                color: theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -45,7 +45,7 @@ class DevicesOverviewCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.purple[700],
+                  color: theme.colorScheme.background,
                 ),
               ),
             ),

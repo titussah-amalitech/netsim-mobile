@@ -4,7 +4,7 @@ import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart
 import 'package:netsim_mobile/features/scenarios/presentation/widgets/scenario_edit_dialog.dart';
 import '../providers/scenario_provider.dart';
 import '../widgets/difficulty_header_card.dart';
-import '../widgets/stats_carousel.dart';
+import '../widgets/stats_grid.dart';
 import '../widgets/scenario_info_card.dart';
 import '../widgets/devices_overview_card.dart';
 
@@ -57,7 +57,7 @@ class ScenarioViewScreen extends ConsumerWidget {
                 ),
 
                 const SizedBox(height: 20),
-                StatsCarousel(
+                StatsGrid(
                   timeLimit: current.timeLimit,
                   deviceCount: current.devices.length,
                   createdAt: current.metadata.createdAt,
