@@ -48,68 +48,51 @@ class DeviceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final deviceColor = _getDeviceColor(device.type);
+    final deviceColor = Theme.of(context).colorScheme.inverseSurface;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            deviceColor.withValues(alpha: 0.15),
-            deviceColor.withValues(alpha: 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: ShadCard(
+        title: DeviceHeader(
+          device: device,
+          deviceColor: deviceColor,
+          isEditing: isEditing,
+          onToggleEdit: onToggleEdit,
         ),
-        border: Border.all(color: deviceColor.withValues(alpha: 0.3), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DeviceHeader(
-            device: device,
-            deviceColor: deviceColor,
-            isEditing: isEditing,
-            onToggleEdit: onToggleEdit,
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                DeviceInfoRow(device: device),
-                const SizedBox(height: 16),
-                Text(
-                  'Parameters',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (isEditing) ...[
-                  DeviceParametersEdit(
-                    device: device,
-                    editingValues: editingValues,
-                    onValueChanged: onValueChanged,
-                  ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DeviceInfoRow(device: device),
                   const SizedBox(height: 16),
-                  _buildEditActions(),
-                ] else ...[
-                  DeviceParametersView(device: device),
+                  Text(
+                    'Parameters',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (isEditing) ...[
+                    DeviceParametersEdit(
+                      device: device,
+                      editingValues: editingValues,
+                      onValueChanged: onValueChanged,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildEditActions(),
+                  ] else ...[
+                    DeviceParametersView(device: device),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

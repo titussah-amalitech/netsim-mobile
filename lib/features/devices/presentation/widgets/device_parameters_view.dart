@@ -9,63 +9,78 @@ class DeviceParametersView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 5,
+      runSpacing: 5,
       children: [
-        _buildParameterChip(
-          'Ping Interval',
-          '${device.parameters.pingInterval}ms',
-          Icons.timer,
-          Colors.purple,
+        ParameterChip(
+          label: 'Ping Interval',
+          value: '${device.parameters.pingInterval}ms',
+          icon: Icons.timer,
         ),
-        _buildParameterChip(
-          'Latency',
-          '${device.parameters.latencyThreshold}ms',
-          Icons.speed,
-          Colors.orange,
+        ParameterChip(
+          label: 'Latency',
+          value: '${device.parameters.latencyThreshold}ms',
+          icon: Icons.speed,
         ),
-        _buildParameterChip(
-          'Failure Rate',
-          '${(device.parameters.failureProbability * 100).toStringAsFixed(1)}%',
-          Icons.warning,
-          Colors.red,
+        ParameterChip(
+          label: 'Failure Rate',
+          value:
+              '${(device.parameters.failureProbability * 100).toStringAsFixed(1)}%',
+          icon: Icons.warning,
         ),
-        _buildParameterChip(
-          'Traffic Load',
-          '${device.parameters.trafficLoad}%',
-          Icons.analytics,
-          Colors.teal,
+        ParameterChip(
+          label: 'Traffic Load',
+          value: '${device.parameters.trafficLoad}%',
+          icon: Icons.analytics,
         ),
       ],
     );
   }
+}
 
-  Widget _buildParameterChip(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+class ParameterChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const ParameterChip({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: theme.colorScheme.inverseSurface.withOpacity(0.3),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[700])),
+          Icon(icon, size: 12, color: theme.colorScheme.inverseSurface),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: theme.colorScheme.inverseSurface,
+            ),
+          ),
           const SizedBox(width: 4),
           Text(
             value,
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.inverseSurface,
             ),
           ),
         ],

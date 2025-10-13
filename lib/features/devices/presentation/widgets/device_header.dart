@@ -39,7 +39,7 @@ class DeviceHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: deviceColor.withValues(alpha: 0.1),
+        color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
       ),
       child: Row(
@@ -47,12 +47,16 @@ class DeviceHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: deviceColor.withValues(alpha: 0.2),
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.inverseSurface,
+                width: 1,
+              ),
             ),
             child: Icon(
               _getDeviceIcon(device.type),
-              color: deviceColor,
+              color: theme.colorScheme.inverseSurface,
               size: 28,
             ),
           ),
@@ -66,7 +70,7 @@ class DeviceHeader extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: deviceColor,
+                    color: theme.colorScheme.inverseSurface,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -75,9 +79,7 @@ class DeviceHeader extends StatelessWidget {
                   'ID: ${device.id}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: theme.textTheme.bodySmall?.color?.withValues(
-                      alpha: 0.7,
-                    ),
+                    color: theme.colorScheme.inverseSurface.withAlpha(200),
                   ),
                 ),
               ],
@@ -87,7 +89,7 @@ class DeviceHeader extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               onPressed: onToggleEdit,
-              color: deviceColor,
+              color: theme.colorScheme.inverseSurface,
             ),
         ],
       ),

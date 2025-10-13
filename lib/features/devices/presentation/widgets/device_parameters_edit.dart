@@ -103,7 +103,7 @@ class DeviceParametersEdit extends StatelessWidget {
 
         // Traffic Load Slider
         Text(
-          'Traffic Load: ${clampedTrafficLoad}%',
+          'Traffic Load: $clampedTrafficLoad%',
           style: theme.textTheme.bodyMedium,
         ),
         Slider(
@@ -111,7 +111,7 @@ class DeviceParametersEdit extends StatelessWidget {
           min: 0,
           max: 100,
           divisions: 100,
-          label: '${clampedTrafficLoad}%',
+          label: '$clampedTrafficLoad%',
           onChanged: (value) => onValueChanged('trafficLoad', value.toInt()),
         ),
       ],
