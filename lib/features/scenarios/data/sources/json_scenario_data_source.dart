@@ -1,17 +1,23 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart' show rootBundle, AssetManifest;
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
 import 'package:path_provider/path_provider.dart';
 
 class JsonScenarioDataSource {
+  Future<List<String>> getScenarioPaths() async {
+    final AssetManifest assetManifest = await AssetManifest.loadFromAssetBundle(
+      rootBundle,
+    );
+    final List<String> scenarioPaths = assetManifest
+        .listAssets()
+        .where((key) => key.startsWith('assets/data/scenarios/'))
+        .toList();
+    return scenarioPaths;
+  }
+
   Future<List<Scenario>> loadScenariosFromAssets() async {
     try {
-      final manifestContent = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-      final scenarioPaths = manifestMap.keys
-          .where((String key) => key.startsWith('assets/data/scenarios/'))
-          .toList();
+      final scenarioPaths = await getScenarioPaths();
       if (scenarioPaths.isEmpty) {
         print("Warning: No scenario files found in assets/data/scenarios/");
         return [];

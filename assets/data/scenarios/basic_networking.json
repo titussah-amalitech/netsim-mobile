@@ -5,6 +5,7 @@
   "devices": [
     {
       "id": "1",
+      "type": "router",
       "position": { "x": 0, "y": 0 },
       "parameters": {
         "pingInterval": 30,

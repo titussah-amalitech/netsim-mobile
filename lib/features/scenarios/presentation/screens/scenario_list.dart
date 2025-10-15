@@ -1,8 +1,8 @@
 // scenario/presentation/scenario_list_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/core/widgets/theme_toggle_button.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/scenario_provider.dart';
 import '../widgets/difficulty_tag.dart';
 import 'scenario_view.dart';
@@ -12,14 +12,14 @@ class ScenarioListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scenariosAsync = ref.watch(scenariosProvider);
+    final scenariosAsync = ref.watch(scenarioNotifierProvider);
     final theme = ShadTheme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Scenarios"),
         centerTitle: true,
-        actions: const [ThemeToggleButton()],
+        actions: [ThemeToggleButton()],
       ),
       body: scenariosAsync.when(
         data: (scenarios) => ListView.builder(
@@ -65,7 +65,9 @@ class ScenarioListScreen extends ConsumerWidget {
               Text('Error loading scenarios: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => ref.invalidate(scenariosProvider),
+                onPressed: () {
+                  ref.read(scenarioNotifierProvider.notifier).loadScenarios();
+                },
                 child: const Text('Retry'),
               ),
             ],

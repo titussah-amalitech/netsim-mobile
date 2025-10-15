@@ -1,154 +1,100 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
-import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/utils/snackbar_helper.dart';
-import '../../../devices/presentation/screens/device_list_screen.dart';
-import '../widgets/device_overview_item.dart';
-import '../widgets/edit_scenario_modal.dart';
-import '../widgets/metadata_row.dart';
+import 'package:netsim_mobile/features/scenarios/presentation/widgets/scenario_edit_dialog.dart';
+import '../providers/scenario_provider.dart';
+import '../widgets/difficulty_header_card.dart';
+import '../widgets/stats_grid.dart';
+import '../widgets/scenario_info_card.dart';
+import '../widgets/devices_overview_card.dart';
 
-class ScenarioViewScreen extends StatefulWidget {
+class ScenarioViewScreen extends ConsumerWidget {
   final Scenario scenario;
 
   const ScenarioViewScreen({super.key, required this.scenario});
 
   @override
-  State<ScenarioViewScreen> createState() => _ScenarioViewScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scenariosAsync = ref.watch(scenarioNotifierProvider);
 
-class _ScenarioViewScreenState extends State<ScenarioViewScreen> {
-  late Scenario _currentScenario;
+    return scenariosAsync.when(
+      data: (scenarios) {
+        final current = scenarios.firstWhere(
+          (s) =>
+              identical(s, scenario) ||
+              (s.name == scenario.name &&
+                  s.metadata.createdAt == scenario.metadata.createdAt),
+          orElse: () => scenario,
+        );
 
-  @override
-  void initState() {
-    super.initState();
-    _currentScenario = widget.scenario;
-  }
-
-  void _showEditModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => EditScenarioModal(scenario: _currentScenario),
-    ).then((result) {
-      if (result != null && result is Map<String, dynamic>) {
-        if (result['success'] == true && result['scenario'] is Scenario) {
-          setState(() {
-            _currentScenario = result['scenario'] as Scenario;
-          });
-          if (context.mounted)
-            SnackBarHelper.showSuccess(
-              context,
-              'Scenario updated successfully',
-            );
-        }
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = ShadTheme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_currentScenario.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: _showEditModal,
-            tooltip: 'Edit Scenario',
+        return Scaffold(
+          appBar: AppBar(
+            scrolledUnderElevation: 0,
+            title: Text(
+              current.name,
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () {
+                  ScenarioEditDialog().showEditDialog(context, current);
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Metadata Card
-            ShadCard(
-              width: double.infinity,
-              title: Text('Scenario Details', style: theme.textTheme.h4),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    MetadataRow(
-                      label: 'Description',
-                      value: _currentScenario.metadata.description,
-                    ),
-                    const SizedBox(height: 8),
-                    MetadataRow(
-                      label: 'Difficulty',
-                      value: _currentScenario.difficulty.toUpperCase(),
-                    ),
-                    const SizedBox(height: 8),
-                    MetadataRow(
-                      label: 'Time Limit',
-                      value: '${_currentScenario.timeLimit} seconds',
-                    ),
-                    const SizedBox(height: 8),
-                    MetadataRow(
-                      label: 'Created By',
-                      value: _currentScenario.metadata.createdBy,
-                    ),
-                    const SizedBox(height: 8),
-                    MetadataRow(
-                      label: 'Created At',
-                      value: DateFormatter.formatDate(
-                        _currentScenario.metadata.createdAt,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    MetadataRow(
-                      label: 'Total Devices',
-                      value: _currentScenario.devices.length.toString(),
-                    ),
-                  ],
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DifficultyHeaderCard(difficulty: current.difficulty),
+                const SizedBox(height: 20),
+                ScenarioInfoCard(
+                  name: current.name,
+                  description: current.metadata.description,
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
 
-            // Devices Overview Card
-            ShadCard(
-              width: double.infinity,
-              title: Text('Devices Overview', style: theme.textTheme.h4),
-              footer: Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: ShadButton(
-                  width: double.infinity,
-                  child: const Text('Show Devices Details'),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            DeviceListScreen(devices: _currentScenario.devices),
-                      ),
-                    );
-                  },
+                const SizedBox(height: 20),
+                StatsGrid(
+                  timeLimit: current.timeLimit,
+                  deviceCount: current.devices.length,
+                  createdAt: current.metadata.createdAt,
+                  createdBy: current.metadata.createdBy,
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: _currentScenario.devices.isEmpty
-                    ? Text(
-                        'No devices in this scenario',
-                        style: theme.textTheme.muted,
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _currentScenario.devices.map((device) {
-                          return DeviceOverviewItem(device: device);
-                        }).toList(),
-                      ),
-              ),
+                const SizedBox(height: 20),
+                // DescriptionCard(description: current.metadata.description),
+                //
+                // const SizedBox(height: 20),
+                DevicesOverviewCard(scenario: current),
+              ],
             ),
-          ],
+          ),
+        );
+      },
+      loading: () => Scaffold(
+        appBar: AppBar(title: Text(scenario.name)),
+        body: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        appBar: AppBar(title: Text(scenario.name)),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error loading scenarios: $error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(scenarioNotifierProvider.notifier).loadScenarios();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       ),
     );
