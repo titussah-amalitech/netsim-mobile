@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:math' as math;
+// Use dart:math via alias `math` for trig and Point
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:netsim_mobile/features/devices/data/models/device_model.dart';
+import 'package:netsim_mobile/features/devices/data/models/device_position.dart';
 
 class NetworkCanvas extends StatefulWidget {
   final List<Device> devices;
@@ -42,8 +44,8 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 800,
-      height: 600,
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -52,17 +54,34 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
           color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
         ),
       ),
-      child: Stack(
-        children: [
-          // Draw device connections — pass controller as repaint so painter repaints every tick
-          CustomPaint(
-            painter: NetworkConnectionsPainter(
-              devices: widget.devices,
-              animation: _controller, // pass controller as Listenable
-              offlineDeviceIds: widget.activeErrorDeviceIds,
-            ),
-            size: const Size(800, 600),
-          ),
+       child: LayoutBuilder(
+         builder: (context, constraints) {
+           final centerX = constraints.maxWidth / 2;
+           final centerY = constraints.maxHeight / 2;
+           final radius = math.min(constraints.maxWidth, constraints.maxHeight) * 0.3;
+           
+           // Calculate positions for all devices
+           for (var i = 0; i < widget.devices.length; i++) {
+             final angle = (2 * math.pi * i) / widget.devices.length;
+             final x = centerX + radius * math.cos(angle);
+             final y = centerY + radius * math.sin(angle);
+            // Replace the device in the list with a copy that has the new position
+            widget.devices[i] = widget.devices[i].copyWith(
+              position: Position(x: x.round(), y: y.round()),
+            );
+           }
+           
+           return Stack(
+             children: [
+               // Draw device connections — pass controller as repaint so painter repaints every tick
+               CustomPaint(
+                 painter: NetworkConnectionsPainter(
+                   devices: widget.devices,
+                   animation: _controller, // pass controller as Listenable
+                   offlineDeviceIds: widget.activeErrorDeviceIds,
+                 ),
+                 size: Size(constraints.maxWidth, constraints.maxHeight),
+               ),
           // Draw device widgets. Use index in the key to guarantee uniqueness
           // and avoid Duplicate keys when device IDs are non-unique in source data.
           // Also emit a debug warning when duplicate ids are detected.
@@ -90,6 +109,8 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
             }).toList();
           })(),
         ],
+      );
+        },
       ),
     );
   }

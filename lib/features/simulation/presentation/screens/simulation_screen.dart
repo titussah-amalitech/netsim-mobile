@@ -10,10 +10,7 @@ import 'package:netsim_mobile/features/simulation/presentation/widgets/fix_devic
 class SimulationScreen extends ConsumerStatefulWidget {
   final Scenario scenario;
 
-  const SimulationScreen({
-    super.key,
-    required this.scenario,
-  });
+  const SimulationScreen({super.key, required this.scenario});
 
   @override
   ConsumerState<SimulationScreen> createState() => _SimulationScreenState();
@@ -21,12 +18,12 @@ class SimulationScreen extends ConsumerStatefulWidget {
 
 class _SimulationScreenState extends ConsumerState<SimulationScreen> {
   final Map<String, DeviceWidgetController> _deviceControllers = {};
+
   @override
   void initState() {
     super.initState();
-    // Start the simulation once the screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.watch(simulationProvider.notifier).startSimulation(widget.scenario);
+      ref.read(simulationProvider.notifier).startSimulation(widget.scenario);
     });
   }
 
@@ -34,18 +31,19 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
   Widget build(BuildContext context) {
     final simulationState = ref.watch(simulationProvider);
 
-    // Show game over dialog when simulation finishes
+    // Game Over dialog (only show once)
     if (simulationState.isFinished && !simulationState.isRunning) {
-      // Use a post-frame callback to avoid showing dialog during build
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => GameOverDialog(
-            scenario: widget.scenario,
-            score: simulationState.score,
-          ),
-        );
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => GameOverDialog(
+              scenario: widget.scenario,
+              score: simulationState.score,
+            ),
+          );
+        }
       });
     }
 
@@ -53,13 +51,14 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(simulationState),
+            _buildHeader(context, simulationState),
+            const Divider(height: 1),
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SingleChildScrollView(
-                    child: _buildNetworkCanvas(simulationState),
+                    child: _buildNetworkCanvas(context, simulationState),
                   ),
                 ),
               ),
@@ -70,70 +69,196 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
     );
   }
 
+  // ===============================
+  // Time Formatter
+  // ===============================
   String _formatTime(int seconds) {
     final mins = (seconds ~/ 60).toString().padLeft(2, '0');
     final secs = (seconds % 60).toString().padLeft(2, '0');
     return '$mins:$secs';
   }
 
-  Widget _buildHeader(SimulationState simulationState) {
+  // ===============================
+  // Header Controls (Timer, Buttons, Score)
+  // ===============================
+  Widget _buildHeader(BuildContext context, SimulationState simulationState) {
+    final notifier = ref.read(simulationProvider.notifier);
+
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      color: Colors.grey.shade100,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Scenario name
-          Text(
-            widget.scenario.name,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          // Timer
-          Text(
-            _formatTime(simulationState.remainingTime),
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          // Score
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              'Score: ${simulationState.score}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+          // Scenario Name
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.scenario.name,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
+                Text(
+                _formatTime(simulationState.remainingTime),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Timer
+            
+              // Control Buttons: Pulse, Pause/Resume
+              Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      final shouldRestart = await showDialog<bool>(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Restart Simulation'),
+                          content: const Text(
+                            'Are you sure you want to restart the simulation? All progress and score will be lost.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                              ),
+                              child: const Text('Restart'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      // If user confirmed restart
+                      if (shouldRestart == true) {
+                        ref.read(simulationProvider.notifier).resetSimulation();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Simulation restarted successfully!'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text(
+                      'Reset',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      if (simulationState.isRunning) {
+                        notifier.pauseSimulation();
+                      } else {
+                        notifier.resumeSimulation();
+                      }
+                    },
+                    icon: Icon(
+                      simulationState.isRunning
+                          ? Icons.pause
+                          : Icons.play_arrow,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      simulationState.isRunning ? 'Pause' : 'Resume',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: simulationState.isRunning
+                          ? Colors.orange
+                          : Colors.green,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              // Score Display
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  'Score: ${simulationState.score}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
-  Widget _buildNetworkCanvas(SimulationState simulationState) {
-    // Ensure a controller exists for each device so we can trigger animations
+
+  // ===============================
+  //  Network Canvas
+  // ===============================
+  Widget _buildNetworkCanvas(
+    BuildContext context,
+    SimulationState simulationState,
+  ) {
     for (final d in simulationState.devices) {
       _deviceControllers.putIfAbsent(d.id, () => DeviceWidgetController());
     }
+
     return Container(
-      padding: const EdgeInsets.all(16),
+    
+      padding: const EdgeInsets.all(6),
       child: NetworkCanvas(
+        
         devices: simulationState.devices,
-        // pass the set of device ids currently in error
-        activeErrorDeviceIds: simulationState.activeErrorStartTimes.keys.toSet(),
+        activeErrorDeviceIds: simulationState.activeErrorStartTimes.keys
+            .toSet(),
         controllers: _deviceControllers,
         onDeviceTap: (deviceId) {
-          // Only show the fix dialog if this device currently has an error
           if (simulationState.activeErrorStartTimes.containsKey(deviceId)) {
             showDialog<void>(
               context: context,
@@ -141,10 +266,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
               builder: (context) => FixDeviceDialog(
                 deviceId: deviceId,
                 onConfirm: (id, latency) async {
-                  // Capture messenger before async gap to avoid using BuildContext after await
                   final messenger = ScaffoldMessenger.of(context);
-
-                  // Call provider to attempt fix
                   final result = await ref
                       .read(simulationProvider.notifier)
                       .fixDeviceWithLatency(id, latency);
@@ -154,33 +276,30 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                   final controller = _deviceControllers[id];
 
                   if (result.$1) {
-                    // Success: show snackbar (UI will rebuild via Riverpod state change)
                     messenger.showSnackBar(
                       SnackBar(
-                        content: Text('Device Restored! +${result.$2} points'),
+                        content: Text(
+                          'Device restored! +${result.$2} points',
+                        ),
                         backgroundColor: Colors.green,
                       ),
                     );
-                    // Trigger success glow animation on the device widget if controller exists
                     controller?.playSuccess();
                   } else {
-                    // Failure: show error and allow retry
                     messenger.showSnackBar(
                       const SnackBar(
-                        content: Text('Device unstable. Try again.'),
+                        content: Text('Incorrect adjustment. Try again.'),
                         backgroundColor: Colors.red,
                       ),
                     );
-                    // Trigger failure shake animation if controller exists
                     controller?.playFailure();
                   }
                 },
               ),
             );
           } else {
-            // If no error, show a simple info snack
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('No active error on this device')),
+              const SnackBar(content: Text('No active error on this device.')),
             );
           }
         },
