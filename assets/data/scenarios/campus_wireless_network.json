@@ -51,6 +51,54 @@
         "latency": 20,
         "lastChecked": "2025-10-10T14:39:23.000Z"
       }
+    },
+      {
+      "id": "8",
+      "type": "switch",
+      "position": { "x": 0, "y": 0 },
+      "parameters": {
+        "pingInterval": 30,
+        "latencyThreshold": 100,
+        "failureProbability": 0.1,
+        "trafficLoad": 10
+      },
+      "status": {
+        "online": true,
+        "latency": 20,
+        "lastChecked": "2025-10-10T14:39:23.000Z"
+      }
+    },
+      {
+      "id": "9",
+      "type": "Router",
+      "position": { "x": 0, "y": 0 },
+      "parameters": {
+        "pingInterval": 30,
+        "latencyThreshold": 100,
+        "failureProbability": 0.1,
+        "trafficLoad": 10
+      },
+      "status": {
+        "online": true,
+        "latency": 20,
+        "lastChecked": "2025-10-10T14:39:23.000Z"
+      }
+    },
+      {
+      "id": "10",
+      "type": "Firewall",
+      "position": { "x": 0, "y": 0 },
+      "parameters": {
+        "pingInterval": 30,
+        "latencyThreshold": 100,
+        "failureProbability": 0.1,
+        "trafficLoad": 10
+      },
+      "status": {
+        "online": true,
+        "latency": 20,
+        "lastChecked": "2025-10-10T14:39:23.000Z"
+      }
     }
   ],
   "metadata": {

@@ -16,6 +16,7 @@ class DashboardScreen extends ConsumerWidget {
     final scenarioNotifier = ref.read(scenarioNotifierProvider.notifier);
 
     return Scaffold(
+      
       appBar: AppBar(
         title: const Text("Network Dashboard"),
         actions: const [ThemeToggleButton()],

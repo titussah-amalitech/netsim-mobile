@@ -39,7 +39,6 @@ class MyApp extends ConsumerWidget {
         return RootScaffold(child: child ?? const SizedBox.shrink());
       },
       routes: {
-        "dashboard": (context) => DashboardScreen(),
         "/leaderboard": (context) => LeaderboardScreen(),
         "/": (context) => const Onboarding(),
         "/game": (context) => const GameView(),
