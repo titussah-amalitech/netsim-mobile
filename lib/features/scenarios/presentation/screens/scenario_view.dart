@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
 import 'package:netsim_mobile/features/scenarios/presentation/widgets/scenario_edit_dialog.dart';
-import 'package:netsim_mobile/features/simulation/presentation/screens/simulation_screen.dart';
 import '../providers/scenario_provider.dart';
 import '../widgets/difficulty_header_card.dart';
 import '../widgets/stats_grid.dart';
@@ -72,18 +71,7 @@ class ScenarioViewScreen extends ConsumerWidget {
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SimulationScreen(scenario: current),
-                ),
-              );
-            },
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Start Simulation'),
-          ),
+     
         );
       },
       loading: () => Scaffold(

@@ -14,17 +14,20 @@ class SimulationState {
   final DateTime? lastErrorTime; // Track when the last error was generated
   // Recent auto-recovered device IDs (for UI notifications). Cleared after UI consumes.
   final List<String> recentAutoRecoveredDevices;
+  // Track recently generated errors for UI notifications
+  final List<String> recentErrors;
 
   const SimulationState({
     this.currentScenario,
     this.devices = const [],
     this.score = 0,
     this.remainingTime = 0,
-  this.activeErrorStartTimes = const {},
+    this.activeErrorStartTimes = const {},
     this.isRunning = false,
     this.isFinished = false,
     this.lastErrorTime,
     this.recentAutoRecoveredDevices = const [],
+    this.recentErrors = const [],
   });
 
   SimulationState copyWith({
@@ -37,18 +40,19 @@ class SimulationState {
     bool? isFinished,
     DateTime? lastErrorTime,
     List<String>? recentAutoRecoveredDevices,
+    List<String>? recentErrors,
   }) {
     return SimulationState(
       currentScenario: currentScenario ?? this.currentScenario,
       devices: devices ?? this.devices,
       score: score ?? this.score,
       remainingTime: remainingTime ?? this.remainingTime,
-  activeErrorStartTimes: activeErrorStartTimes ?? this.activeErrorStartTimes,
+      activeErrorStartTimes: activeErrorStartTimes ?? this.activeErrorStartTimes,
       isRunning: isRunning ?? this.isRunning,
       isFinished: isFinished ?? this.isFinished,
       lastErrorTime: lastErrorTime ?? this.lastErrorTime,
-      recentAutoRecoveredDevices:
-          recentAutoRecoveredDevices ?? this.recentAutoRecoveredDevices,
+      recentAutoRecoveredDevices: recentAutoRecoveredDevices ?? this.recentAutoRecoveredDevices,
+      recentErrors: recentErrors ?? this.recentErrors,
     );
   }
 }

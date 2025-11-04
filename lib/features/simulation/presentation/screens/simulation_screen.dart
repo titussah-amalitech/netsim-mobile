@@ -27,19 +27,55 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     final simulationState = ref.watch(simulationProvider);
 
-    // Listen for auto-recovered devices and show SnackBar when they appear.
-    // Use ref.listen inside build (ConsumerState) so this is registered during build.
+    // Listen for auto-recovered devices and new errors to show alerts
     ref.listen<SimulationState>(simulationProvider, (previous, next) {
       // Avoid showing on initial registration
       if (previous == null) return;
+      if (!mounted) return;
 
+      // Show error alerts
+      if (next.recentErrors.isNotEmpty) {
+        final deviceId = next.recentErrors.first;
+        final message = 'Error detected on device $deviceId!';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+
+        // Clear the error notification
+        ref.read(simulationProvider.notifier).clearErrorNotifications();
+      }
+
+      // Show auto-recovery alerts
       if (next.recentAutoRecoveredDevices.isNotEmpty) {
-        if (!mounted) return;
         final ids = next.recentAutoRecoveredDevices;
         final message = ids.length == 1
             ? 'Device ${ids.first} auto-recovered — penalty applied.'
@@ -120,11 +156,55 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              InkWell(
+                onTap: () async {
+                  // Show confirmation dialog
+                  final shouldExit = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Exit Simulation?'),
+                      content: const Text(
+                        'Are you sure you want to exit the simulation? '
+                        'Your current progress will be lost.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.pop(context, false), // Cancel
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () =>
+                              Navigator.pop(context, true), // Confirm
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          child: const Text(
+                            'Exit',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  // Handle user decision
+                  if (shouldExit == true) {
+                    ref.read(simulationProvider.notifier).resetSimulation();
+                    Navigator.pop(context); // Go back to previous screen
+                  }
+                },
+                child: const Icon(Icons.arrow_back_ios, size: 24),
+              ),
+
               Text(
                 widget.scenario.name,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-                Text(
+              Text(
                 _formatTime(simulationState.remainingTime),
                 style: const TextStyle(
                   fontSize: 24,
@@ -132,7 +212,6 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                   color: Colors.black87,
                 ),
               ),
-
             ],
           ),
           const SizedBox(height: 12),
@@ -141,7 +220,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Timer
-            
+
               // Control Buttons: Pulse, Pause/Resume
               Row(
                 children: [
@@ -276,9 +355,8 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
     }
 
     return Container(
-      
       width: MediaQuery.of(context).size.width * 0.95,
-    height: MediaQuery.of(context).size.height * 0.80,
+      height: MediaQuery.of(context).size.height * 0.80,
       padding: const EdgeInsets.all(6),
       child: NetworkCanvas(
         showLabels: true,
@@ -306,9 +384,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                   if (result.$1) {
                     messenger.showSnackBar(
                       SnackBar(
-                        content: Text(
-                          'Device restored! +${result.$2} points',
-                        ),
+                        content: Text('Device restored! +${result.$2} points'),
                         backgroundColor: Colors.green,
                       ),
                     );

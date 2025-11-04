@@ -9,6 +9,9 @@ import 'package:netsim_mobile/features/devices/data/models/device_status.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
 import 'package:netsim_mobile/features/simulation/data/models/simulation_state.dart';
 import 'package:netsim_mobile/features/simulation/services/sound_service.dart';
+import 'package:netsim_mobile/features/leaderboard/presentation/providers/leaderboard_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences.dart';
 
 /// Provider for the sound service
 final soundServiceProvider = Provider<SoundService>((ref) => SoundService());
@@ -16,7 +19,8 @@ final soundServiceProvider = Provider<SoundService>((ref) => SoundService());
 /// Main simulation provider that manages simulation logic and state
 final simulationProvider = StateNotifierProvider<SimulationNotifier, SimulationState>((ref) {
   final soundService = ref.watch(soundServiceProvider);
-  return SimulationNotifier(soundService);
+  final leaderboardController = ref.watch(leaderboardControllerProvider);
+  return SimulationNotifier(soundService, leaderboardController);
 });
 
 /// Simulation logic controller using Riverpod's StateNotifier.
@@ -25,22 +29,21 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   Timer? _errorTimer;
   final Random _random = Random();
   final SoundService _soundService;
+  final LeaderboardController _leaderboardController;
   // Grace period for player to manually fix an error (in seconds)
   static const int _errorGracePeriodSeconds = 30;
   // Penalty points when a device auto-recovers after grace period
   static const int _autoRecoveryPenalty = 30;
 
-  SimulationNotifier(this._soundService) : super(const SimulationState());
-
-  @override
-  void dispose() {
-    _gameTimer?.cancel();
-    _errorTimer?.cancel();
-    super.dispose();
+  SimulationNotifier(this._soundService, this._leaderboardController) : super(const SimulationState()) {
+    // Start background music when the notifier is created
+    _soundService.startBackgroundMusic();
   }
 
+ 
+
   // ===============================
-  // 🎮 Start Simulation
+  //  Start Simulation
   // ===============================
   void startSimulation(Scenario scenario) {
     if (state.isRunning) return;
@@ -78,7 +81,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     state = SimulationState(
       currentScenario: scenario,
       devices: positionedDevices,
-      remainingTime: 5 * 60,
+      remainingTime: 1 * 60,
       isRunning: true,
     );
 
@@ -158,14 +161,15 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
       devices: updatedDevices,
       activeErrorStartTimes: updatedStartTimes,
       lastErrorTime: DateTime.now(),
+      recentErrors: [errorDevice.id],
     );
 
     _soundService.playErrorSound();
-    debugPrint('❌ Error generated on ${errorDevice.id}');
+    debugPrint(' Error generated on ${errorDevice.id}');
   }
 
   // ===============================
-  // 🛠️ Fix Device
+  //  Fix Device
   // ===============================
   Future<(bool success, int points)> fixDeviceWithLatency(String deviceId, double latency) async {
     if (!state.isRunning || !state.activeErrorStartTimes.containsKey(deviceId)) {
@@ -205,25 +209,46 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     );
 
     _soundService.playSuccessSound();
-    debugPrint('✅ Fixed $deviceId | +$totalPoints points | Total: ${state.score}');
+    debugPrint('Fixed $deviceId | +$totalPoints points | Total: ${state.score}');
     return (true, totalPoints);
   }
 
   // ===============================
-  // 🏁 End Simulation
+  //  End Simulation
   // ===============================
-  void endSimulation() {
-    _gameTimer?.cancel();
-    _errorTimer?.cancel();
-    _gameTimer = null;
-    _errorTimer = null;
+  Future<void> endSimulation() async {
+    try {
+      _gameTimer?.cancel();
+      _errorTimer?.cancel();
+      _gameTimer = null;
+      _errorTimer = null;
 
-    state = state.copyWith(isRunning: false, isFinished: true);
-    debugPrint('🏁 Simulation Ended | Final Score: ${state.score}');
+      state = state.copyWith(isRunning: false, isFinished: true);
+      _soundService.stopBackgroundMusic();
+      _soundService.playGameOverSound();
+
+      // Update leaderboard with the final score
+      final prefs = await SharedPreferences.getInstance();
+      final playerName = prefs.getString('userName');
+      
+      if (playerName == null || playerName.isEmpty) {
+        debugPrint(' Warning: userName not found in SharedPreferences');
+        return;
+      }
+
+      debugPrint('📊 Updating leaderboard: Player=$playerName, Score=${state.score}');
+      await _leaderboardController.updateLeaderboard(playerName, state.score);
+      debugPrint('✅ Leaderboard updated successfully');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error updating leaderboard: $e');
+      debugPrint('Stack trace: $stackTrace');
+    } finally {
+      debugPrint('🏁 Simulation Ended | Final Score: ${state.score}');
+    }
   }
 
   // ===============================
-  // ⏸️ Pause / ▶️ Resume / 🔁 Pulse
+  //  Pause /  Resume / Reset
   // ===============================
   void pauseSimulation() {
     if (!state.isRunning || state.isFinished) return;
@@ -234,7 +259,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     _errorTimer = null;
 
     state = state.copyWith(isRunning: false);
-    debugPrint('⏸️ Simulation paused');
+    debugPrint(' Simulation paused');
   }
 
   void resumeSimulation() {
@@ -242,7 +267,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
 
     _startTimers();
     state = state.copyWith(isRunning: true);
-    debugPrint('▶️ Simulation resumed');
+    debugPrint(' Simulation resumed');
   }
 
   void pulse() {
@@ -250,7 +275,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
 
     if (state.remainingTime > 0) {
       state = state.copyWith(remainingTime: state.remainingTime - 1);
-      debugPrint('⏱️ Pulse tick: ${state.remainingTime}s left');
+      debugPrint(' Pulse tick: ${state.remainingTime}s left');
     } else {
       endSimulation();
       return;
@@ -362,24 +387,46 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     state = state.copyWith(recentAutoRecoveredDevices: []);
   }
 
+  void clearErrorNotifications() {
+    if (state.recentErrors.isEmpty) return;
+    state = state.copyWith(recentErrors: []);
+  }
+
   // ===============================
   // 🔄 Reset Simulation
   // ===============================
-void resetSimulation() {
-  _gameTimer?.cancel();
-  _errorTimer?.cancel();
-  _gameTimer = null;
-  _errorTimer = null;
 
-  if (state.currentScenario != null) {
-    final scenario = state.currentScenario!;
-    state = const SimulationState(); // clear current
-    debugPrint('🔄 Simulation reset — restarting scenario "${scenario.name}"');
-    startSimulation(scenario); // restart fresh
-  } else {
-    state = const SimulationState();
-    debugPrint('🔄 Simulation reset — no scenario loaded');
+  void resetSimulation({bool restart = false}) {
+    _gameTimer?.cancel();
+    _errorTimer?.cancel();
+    _gameTimer = null;
+    _errorTimer = null;
+
+    _soundService.stopBackgroundMusic();
+
+    // When restarting, start fresh from the same scenario
+    if (restart && state.currentScenario != null) {
+      final scenario = state.currentScenario!;
+      state = const SimulationState(); // clear first
+      debugPrint('🔄 Simulation reset — restarting scenario "${scenario.name}"');
+      startSimulation(scenario);
+    } else {
+      // Fully clear simulation (used when exiting the game)
+      state = const SimulationState();
+      debugPrint('🧹 Simulation completely stopped and cleared');
+    }
   }
-}
+
+  @override
+  void dispose() {
+    // Ensure timers and music are stopped when provider is disposed
+    _gameTimer?.cancel();
+    _errorTimer?.cancel();
+    _soundService.stopBackgroundMusic();
+    _gameTimer = null;
+    _errorTimer = null;
+    debugPrint('🛑 SimulationNotifier disposed — timers and sounds cleared');
+    super.dispose();
+  }
 
 }

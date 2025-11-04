@@ -1,17 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:netsim_mobile/features/leaderboard/data/model/leaderboard_entry.dart';
-import '../data/leaderboard_data_source.dart';
+// This file was the old leaderboard logic provider. The implementation has moved to
+// `presentation/providers/leaderboard_provider.dart`. Re-export that module so
+// imports that still point here continue to work and refer to the single source
+// of truth.
 
-
-final leaderboardDataSourceProvider = Provider<LeaderboardDataSource>((ref) {
-  return LeaderboardDataSource();
-});
-
-final leaderboardProvider = FutureProvider<List<LeaderboardEntry>>((ref) async {
-  final dataSource = ref.read(leaderboardDataSourceProvider);
-  final entries = await dataSource.loadLeaderboard();
-
-  // Sort by descending score
-  entries.sort((a, b) => b.score.compareTo(a.score));
-  return entries;
-});
+export 'package:netsim_mobile/features/leaderboard/presentation/providers/leaderboard_provider.dart';

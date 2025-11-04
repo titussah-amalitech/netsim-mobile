@@ -5,6 +5,7 @@ import 'package:netsim_mobile/core/widgets/root_scaffold.dart';
 import 'package:netsim_mobile/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:netsim_mobile/features/leaderboard/presentation/leaderboard_screen.dart';
 import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
+import 'package:netsim_mobile/features/onboarding/presentation/screens/user_setup_screen.dart';
 import 'package:netsim_mobile/features/scenarios/presentation/game_view.dart';
 import 'package:netsim_mobile/features/scenarios/presentation/screens/scenario_list.dart';
 import 'package:netsim_mobile/features/logs/presentation/screens/logs_list_screen.dart';
@@ -39,10 +40,11 @@ class MyApp extends ConsumerWidget {
         return RootScaffold(child: child ?? const SizedBox.shrink());
       },
       routes: {
+        "/": (context) => const UserSetupScreen(),
         "/leaderboard": (context) => LeaderboardScreen(),
-        "/": (context) => const Onboarding(),
+        "/onboarding": (context) => const Onboarding(),
         "/game": (context) => const GameView(),
-        "/dashboard": (context) => const DashboardScreen(),
+        "/dashboard": (context) => const ScenarioListScreenPlayer(),
         "/scenario": (context) => const ScenarioListScreen(),
         "/logs": (context) => const LatestLogsList(),
         "/devices": (context) =>

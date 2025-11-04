@@ -17,7 +17,7 @@ class FixDeviceDialog extends ConsumerStatefulWidget {
 }
 
 class _FixDeviceDialogState extends ConsumerState<FixDeviceDialog> {
-  double _latency = 0; // Default value in the middle of valid range
+  double _latency = 120; // Default value in the middle of valid range
   Timer? _timeoutTimer;
 
   @override
