@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'dart:math' as math;
 // Use dart:math via alias `math` for trig and Point
@@ -17,7 +19,7 @@ class NetworkCanvas extends StatefulWidget {
     required this.devices,
     this.activeErrorDeviceIds = const {},
     this.onDeviceTap,
-    this.controllers,
+    this.controllers, required bool showLabels,
   });
   @override
   State<NetworkCanvas> createState() => _NetworkCanvasState();
@@ -44,12 +46,12 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height,
+      width: MediaQuery.of(context).size.width*0.95,
+      height: MediaQuery.of(context).size.height*0.80,
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.blueGrey[50],
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
         ),
@@ -247,7 +249,7 @@ class _DeviceWidgetState extends State<DeviceWidget>
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             width: deviceVisualSize,
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: isError
                   ? Theme.of(context).colorScheme.errorContainer

@@ -5,7 +5,7 @@
   "score": 80,
   "devices": [
     {
-      "id": "6",
+      "id": "50",
       "type": "pc",
       "position": { "x": 8, "y": 10 },
       "parameters": {
@@ -21,7 +21,7 @@
       }
     },
     {
-      "id": "7",
+      "id": "51",
       "type": "other",
       "position": { "x": 12, "y": 18 },
       "parameters": {
@@ -53,7 +53,7 @@
       }
     },
       {
-      "id": "8",
+      "id": "52",
       "type": "switch",
       "position": { "x": 0, "y": 0 },
       "parameters": {
@@ -69,7 +69,7 @@
       }
     },
       {
-      "id": "9",
+      "id": "53",
       "type": "Router",
       "position": { "x": 0, "y": 0 },
       "parameters": {
@@ -85,8 +85,8 @@
       }
     },
       {
-      "id": "10",
-      "type": "Firewall",
+      "id": "54",
+      "type": "Switch",
       "position": { "x": 0, "y": 0 },
       "parameters": {
         "pingInterval": 30,

@@ -250,10 +250,12 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
     }
 
     return Container(
-    
+      
+      width: MediaQuery.of(context).size.width * 0.95,
+    height: MediaQuery.of(context).size.height * 0.80,
       padding: const EdgeInsets.all(6),
       child: NetworkCanvas(
-        
+        showLabels: true,
         devices: simulationState.devices,
         activeErrorDeviceIds: simulationState.activeErrorStartTimes.keys
             .toSet(),
