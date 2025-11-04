@@ -27,9 +27,35 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
     final simulationState = ref.watch(simulationProvider);
+
+    // Listen for auto-recovered devices and show SnackBar when they appear.
+    // Use ref.listen inside build (ConsumerState) so this is registered during build.
+    ref.listen<SimulationState>(simulationProvider, (previous, next) {
+      // Avoid showing on initial registration
+      if (previous == null) return;
+
+      if (next.recentAutoRecoveredDevices.isNotEmpty) {
+        if (!mounted) return;
+        final ids = next.recentAutoRecoveredDevices;
+        final message = ids.length == 1
+            ? 'Device ${ids.first} auto-recovered — penalty applied.'
+            : '${ids.length} devices auto-recovered — penalties applied.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+
+        // Clear notifications so we don't show them again
+        ref.read(simulationProvider.notifier).clearAutoRecoveredNotifications();
+      }
+    });
 
     // Game Over dialog (only show once)
     if (simulationState.isFinished && !simulationState.isRunning) {

@@ -25,6 +25,10 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   Timer? _errorTimer;
   final Random _random = Random();
   final SoundService _soundService;
+  // Grace period for player to manually fix an error (in seconds)
+  static const int _errorGracePeriodSeconds = 30;
+  // Penalty points when a device auto-recovers after grace period
+  static const int _autoRecoveryPenalty = 30;
 
   SimulationNotifier(this._soundService) : super(const SimulationState());
 
@@ -87,7 +91,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   }
 
   // ===============================
-  // 🕒 Timer Helpers
+  //  Timer Helpers
   // ===============================
   void _startTimers() {
     _gameTimer = Timer.periodic(
@@ -110,10 +114,13 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     }
 
     state = state.copyWith(remainingTime: state.remainingTime - 1);
+
+    // Check for any active errors that have exceeded the grace period and auto-recover them
+    _autoRecoverExpiredErrors();
   }
 
   // ===============================
-  // ⚠️ Random Error Generator
+  //  Random Error Generator
   // ===============================
   void _generateRandomError() {
     if (!state.isRunning) return;
@@ -294,6 +301,65 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
 
     _soundService.playErrorSound();
     debugPrint('⚡ Error generated on ${errorDevice.id} (pulse)');
+  }
+
+  // Auto-recover any active errors that exceeded the grace period.
+  void _autoRecoverExpiredErrors() {
+    if (state.activeErrorStartTimes.isEmpty) return;
+
+    final now = DateTime.now();
+    final expired = <String>[];
+
+    state.activeErrorStartTimes.forEach((deviceId, startTime) {
+      final elapsed = now.difference(startTime).inSeconds;
+      if (elapsed >= _errorGracePeriodSeconds) expired.add(deviceId);
+    });
+
+    if (expired.isEmpty) return;
+
+    final updatedDevices = List<Device>.from(state.devices);
+    final updatedStartTimes = Map<String, DateTime>.from(state.activeErrorStartTimes);
+    var scoreDelta = 0;
+
+    for (final deviceId in expired) {
+      final idx = updatedDevices.indexWhere((d) => d.id == deviceId);
+      if (idx == -1) continue;
+
+      final device = updatedDevices[idx];
+
+      // Auto-recover: set device online, keep previous latency
+      updatedDevices[idx] = device.copyWith(
+        status: Status(
+          online: true,
+          latency: device.status.latency,
+          lastChecked: DateTime.now(),
+        ),
+      );
+
+      // Remove from active errors
+      updatedStartTimes.remove(deviceId);
+
+      // Apply penalty
+      scoreDelta -= _autoRecoveryPenalty;
+
+      _soundService.playErrorSound();
+      debugPrint('Auto-recovered $deviceId after grace period; penalty ${_autoRecoveryPenalty}');
+    }
+
+    // Update state with recovered devices and deducted score (clamp at 0)
+    final newScore = (state.score + scoreDelta).clamp(0, double.infinity).toInt();
+    state = state.copyWith(
+      devices: updatedDevices,
+      activeErrorStartTimes: updatedStartTimes,
+      score: newScore,
+      recentAutoRecoveredDevices: expired,
+    );
+  }
+
+  /// Clear the auto-recovered notification list after UI consumes it
+  void clearAutoRecoveredNotifications() {
+    if (state.recentAutoRecoveredDevices.isEmpty) return;
+    state = state.copyWith(recentAutoRecoveredDevices: []);
   }
 
   // ===============================
