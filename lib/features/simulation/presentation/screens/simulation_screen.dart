@@ -224,6 +224,30 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
               // Control Buttons: Pulse, Pause/Resume
               Row(
                 children: [
+                   ElevatedButton(
+                    onPressed: () {
+                          if (simulationState.isRunning) {
+                        notifier.pauseSimulation();
+                      }
+                      Navigator.pushNamed(context, '/logs');
+                    },
+                       style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueGrey,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: const Text('View logs',style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                  ),
+                   ),
+                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () async {
                       final shouldRestart = await showDialog<bool>(
@@ -267,7 +291,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
+                        horizontal: 8,
                         vertical: 12,
                       ),
                     ),
@@ -307,7 +331,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                           ? Colors.orange
                           : Colors.green,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
+                        horizontal: 8,
                         vertical: 10,
                       ),
                       shape: RoundedRectangleBorder(

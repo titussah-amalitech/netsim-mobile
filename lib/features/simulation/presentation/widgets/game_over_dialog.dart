@@ -30,7 +30,7 @@ class GameOverDialog extends ConsumerWidget {
                 onPressed: () {
                   ref.read(simulationProvider.notifier).resetSimulation();
                   Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Return to scenario list
+                  Navigator.pushNamed(context, "/dashboard"); // Return to scenario list
                 },
                 child: const Text("Exit"),
               ),
@@ -48,7 +48,7 @@ class GameOverDialog extends ConsumerWidget {
                     ),
                   );
                 },
-                child: const Text("Restart"),
+                child: const Text("Play Again"),
               ),
             ],
           ),

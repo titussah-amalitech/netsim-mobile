@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:netsim_mobile/features/logs/logic/logs_provider.dart';
 
-class UserSetupScreen extends StatefulWidget {
+class UserSetupScreen extends ConsumerStatefulWidget {
   const UserSetupScreen({super.key});
 
   @override
-  State<UserSetupScreen> createState() => _UserSetupScreenState();
+  ConsumerState<UserSetupScreen> createState() => _UserSetupScreenState();
 }
 
-class _UserSetupScreenState extends State<UserSetupScreen> {
+class _UserSetupScreenState extends ConsumerState<UserSetupScreen> {
   final _nameController = TextEditingController();
   final _pinController = TextEditingController();
   bool _isAdmin = false;
@@ -39,9 +41,18 @@ class _UserSetupScreenState extends State<UserSetupScreen> {
     await prefs.setString('userName', name);
     await prefs.setBool('isAdmin', _isAdmin);
 
+    // Immediately reload logs for the newly selected player so UI updates without restarting
+    try {
+      await ref.read(logsProvider.notifier).reloadForCurrentPlayer();
+      await ref.read(latestLogsProvider.notifier).reloadForCurrentPlayer();
+      await ref.read(latestLogProvider.notifier).reloadForCurrentPlayer();
+    } catch (e) {
+      debugPrint('Error reloading logs after user switch: $e');
+    }
+
     // Verify the save worked
     final savedName = prefs.getString('userName');
-    debugPrint('🔐 User setup completed: name=$savedName, admin=$_isAdmin');
+    debugPrint(' User setup completed: name=$savedName, admin=$_isAdmin');
 
     setState(() => _isLoading = false);
 

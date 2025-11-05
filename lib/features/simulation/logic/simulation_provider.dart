@@ -10,6 +10,7 @@ import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart
 import 'package:netsim_mobile/features/simulation/data/models/simulation_state.dart';
 import 'package:netsim_mobile/features/simulation/services/sound_service.dart';
 import 'package:netsim_mobile/features/leaderboard/presentation/providers/leaderboard_provider.dart';
+import 'package:netsim_mobile/features/logs/logic/logs_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:shared_preferences.dart';
 
@@ -20,7 +21,8 @@ final soundServiceProvider = Provider<SoundService>((ref) => SoundService());
 final simulationProvider = StateNotifierProvider<SimulationNotifier, SimulationState>((ref) {
   final soundService = ref.watch(soundServiceProvider);
   final leaderboardController = ref.watch(leaderboardControllerProvider);
-  return SimulationNotifier(soundService, leaderboardController);
+  final latestLogs = ref.watch(latestLogsProvider.notifier);
+  return SimulationNotifier(soundService, leaderboardController, latestLogs);
 });
 
 /// Simulation logic controller using Riverpod's StateNotifier.
@@ -30,15 +32,47 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   final Random _random = Random();
   final SoundService _soundService;
   final LeaderboardController _leaderboardController;
+  final LatestLogsNotifier _logsNotifier;
   // Grace period for player to manually fix an error (in seconds)
   static const int _errorGracePeriodSeconds = 30;
   // Penalty points when a device auto-recovers after grace period
   static const int _autoRecoveryPenalty = 30;
 
-  SimulationNotifier(this._soundService, this._leaderboardController) : super(const SimulationState()) {
+  String? _cachedPlayerName;
+  
+  SimulationNotifier(this._soundService, this._leaderboardController, this._logsNotifier) : super(const SimulationState()) {
     // Start background music when the notifier is created
     _soundService.startBackgroundMusic();
+    // Cache the player name on initialization
+    _initializePlayerName();
   }
+
+  Future<void> _initializePlayerName() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _cachedPlayerName = prefs.getString('userName');
+      if (_cachedPlayerName == null || _cachedPlayerName!.isEmpty) {
+        debugPrint('Warning: No userName found in SharedPreferences');
+      }
+    } catch (e) {
+      debugPrint('Error initializing player name: $e');
+    }
+  }
+
+  /// Helper to retrieve the currently active player name from SharedPreferences.
+  /// Falls back to the cached name or 'Unknown Player' if not available.
+  Future<String> _fetchPlayerName() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final name = prefs.getString('userName');
+      if (name != null && name.isNotEmpty) return name;
+    } catch (_) {
+      // ignore and fallback
+    }
+    return _cachedPlayerName ?? 'Unknown Player';
+  }
+
+  String get _playerName => _cachedPlayerName ?? 'Unknown Player';
 
  
 
@@ -104,7 +138,9 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
 
     _errorTimer = Timer.periodic(
       const Duration(seconds: 10),
-      (_) => _generateRandomError(),
+      (_) async {
+        await _generateRandomError();
+      },
     );
   }
 
@@ -125,7 +161,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   // ===============================
   //  Random Error Generator
   // ===============================
-  void _generateRandomError() {
+  Future<void> _generateRandomError() async {
     if (!state.isRunning) return;
 
     if (state.lastErrorTime != null &&
@@ -162,6 +198,17 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
       activeErrorStartTimes: updatedStartTimes,
       lastErrorTime: DateTime.now(),
       recentErrors: [errorDevice.id],
+    );
+
+    // Log the error event (ensure we use the current persisted player name)
+    final _player = await _fetchPlayerName();
+    _logsNotifier.addGameplayLog(
+      device: errorDevice.id,
+      deviceType: errorDevice.type,
+      eventType: "ERROR",
+      message: "Device went offline during simulation",
+      status: "offline",
+      playerName: _player,
     );
 
     _soundService.playErrorSound();
@@ -208,6 +255,17 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
       activeErrorStartTimes: updatedStartTimes,
     );
 
+    // Log the recovery event (use persisted player name to associate logs correctly)
+    final _player = await _fetchPlayerName();
+    _logsNotifier.addGameplayLog(
+      device: deviceId,
+      deviceType: updatedDevices[deviceIndex].type,
+      eventType: "RECOVERY",
+      message: "Device restored manually (Latency: ${latency}ms, Points: +$totalPoints)",
+      status: "online",
+      playerName: _player,
+    );
+
     _soundService.playSuccessSound();
     debugPrint('Fixed $deviceId | +$totalPoints points | Total: ${state.score}');
     return (true, totalPoints);
@@ -225,7 +283,37 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
 
       state = state.copyWith(isRunning: false, isFinished: true);
       _soundService.stopBackgroundMusic();
-      _soundService.playGameOverSound();
+      // Get devices that need auto-recovery
+      final expiredDevices = state.activeErrorStartTimes.entries
+          .where((entry) => DateTime.now().difference(entry.value).inSeconds > _errorGracePeriodSeconds)
+          .map((entry) => entry.key)
+          .toList();
+
+      if (expiredDevices.isNotEmpty) {
+        // Apply penalty for each expired device
+        final penaltyScore = max(0, state.score - (expiredDevices.length * _autoRecoveryPenalty));
+
+        state = state.copyWith(
+          score: penaltyScore,
+          recentAutoRecoveredDevices: expiredDevices,
+        );
+
+        // Log auto-recoveries
+        final _player = await _fetchPlayerName();
+        for (final deviceId in expiredDevices) {
+          final device = state.devices.firstWhere((d) => d.id == deviceId);
+          _logsNotifier.addGameplayLog(
+            device: deviceId,
+            deviceType: device.type,
+            eventType: "AUTO_RECOVERY",
+            message: "Device auto-recovered (Penalty: -$_autoRecoveryPenalty)",
+            status: "warning",
+            playerName: _player,
+          );
+        }
+    }
+
+    _soundService.playGameOverSound();
 
       // Update leaderboard with the final score
       final prefs = await SharedPreferences.getInstance();
@@ -236,14 +324,14 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
         return;
       }
 
-      debugPrint('📊 Updating leaderboard: Player=$playerName, Score=${state.score}');
+      debugPrint('Updating leaderboard: Player=$playerName, Score=${state.score}');
       await _leaderboardController.updateLeaderboard(playerName, state.score);
-      debugPrint('✅ Leaderboard updated successfully');
+      debugPrint(' Leaderboard updated successfully');
     } catch (e, stackTrace) {
-      debugPrint('❌ Error updating leaderboard: $e');
+      debugPrint(' Error updating leaderboard: $e');
       debugPrint('Stack trace: $stackTrace');
     } finally {
-      debugPrint('🏁 Simulation Ended | Final Score: ${state.score}');
+      debugPrint('Simulation Ended | Final Score: ${state.score}');
     }
   }
 
@@ -329,7 +417,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   }
 
   // Auto-recover any active errors that exceeded the grace period.
-  void _autoRecoverExpiredErrors() {
+  Future<void> _autoRecoverExpiredErrors() async {
     if (state.activeErrorStartTimes.isEmpty) return;
 
     final now = DateTime.now();
@@ -379,6 +467,21 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
       score: newScore,
       recentAutoRecoveredDevices: expired,
     );
+
+    // Log auto-recovery events
+    for (final deviceId in expired) {
+      final deviceIndex = updatedDevices.indexWhere((d) => d.id == deviceId);
+      if (deviceIndex != -1) {
+     _logsNotifier.addGameplayLog(
+  device: deviceId,
+  deviceType: updatedDevices[deviceIndex].type,
+  eventType: "ERROR",
+  message: "Device went offline during simulation",
+  status: "offline",
+  playerName: _playerName,
+);
+      }
+    }
   }
 
   /// Clear the auto-recovered notification list after UI consumes it

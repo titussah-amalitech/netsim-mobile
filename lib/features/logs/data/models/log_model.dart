@@ -8,6 +8,7 @@ class LogModel {
   final String message;
   final String status;
   final DateTime timestamp;
+  final String playerName;
   LogModel({
     required this.id,
     required this.device,
@@ -16,6 +17,7 @@ class LogModel {
     required this.message,
     required this.status,
     required this.timestamp,
+    required this.playerName,
   });
 
   LogModel copyWith({
@@ -26,6 +28,7 @@ class LogModel {
     String? message,
     String? status,
     DateTime? timestamp,
+    String? playerName,
   }) {
     return LogModel(
       id: id ?? this.id,
@@ -35,6 +38,7 @@ class LogModel {
       message: message ?? this.message,
       status: status ?? this.status,
       timestamp: timestamp ?? this.timestamp,
+      playerName: playerName ?? this.playerName,
     );
   }
 
@@ -47,6 +51,7 @@ class LogModel {
       'message': message,
       'status': status,
       'timestamp': timestamp.millisecondsSinceEpoch,
+      'playerName': playerName,
     };
   }
 
@@ -105,6 +110,7 @@ class LogModel {
       message: message,
       status: status,
       timestamp: timestamp,
+      playerName: map['playerName'] ?? 'Unknown',
     );
   }
 
@@ -125,7 +131,7 @@ class LogModel {
 
   @override
   String toString() {
-    return 'LogModel(id: $id, device: $device, deviceType: $deviceType, eventType: $eventType, message: $message, status: $status, timestamp: $timestamp)';
+    return 'LogModel(id: $id, device: $device, deviceType: $deviceType, eventType: $eventType, message: $message, status: $status, timestamp: $timestamp, playerName: $playerName)';
   }
 
   @override
@@ -138,7 +144,8 @@ class LogModel {
         other.eventType == eventType &&
         other.message == message &&
         other.status == status &&
-        other.timestamp == timestamp;
+    other.timestamp == timestamp &&
+    other.playerName == playerName;
   }
 
   @override
@@ -149,6 +156,7 @@ class LogModel {
         eventType.hashCode ^
         message.hashCode ^
         status.hashCode ^
-        timestamp.hashCode;
+    timestamp.hashCode ^
+    playerName.hashCode;
   }
 }

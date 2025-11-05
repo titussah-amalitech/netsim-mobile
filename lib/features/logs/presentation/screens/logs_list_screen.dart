@@ -4,6 +4,8 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:netsim_mobile/features/logs/data/models/log_model.dart';
 import 'package:netsim_mobile/features/logs/logic/logs_provider.dart';
 import 'package:netsim_mobile/core/widgets/theme_toggle_button.dart';
+import 'package:netsim_mobile/features/simulation/logic/simulation_provider.dart';
+import 'package:netsim_mobile/features/simulation/data/models/simulation_state.dart';
 
 Color _statusBadgeColor(String? status) {
   if (status == null) return Colors.grey;
@@ -19,12 +21,26 @@ Color _statusBadgeColor(String? status) {
   }
 }
 
-class LatestLogsList extends ConsumerWidget {
+class LatestLogsList extends ConsumerStatefulWidget {
   const LatestLogsList({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LatestLogsList> createState() => _LatestLogsListState();
+}
+
+class _LatestLogsListState extends ConsumerState<LatestLogsList> {
+  @override
+  Widget build(BuildContext context) {
     final List<LogModel> logs = ref.watch(latestLogsProvider);
+
+    // Listen to simulation state changes to control log update frequency
+    ref.listen<SimulationState>(
+      simulationProvider,
+      (previous, next) {
+        // Toggle gameplay mode in logs notifier based on simulation state
+        ref.read(latestLogsProvider.notifier).setGameplayMode(next.isRunning || false);
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
