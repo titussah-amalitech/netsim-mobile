@@ -63,17 +63,45 @@ class _OnboardingState extends State<Onboarding> {
                     child: const Text("Edit Scenarios"),
                     onPressed: () => Navigator.pushNamed(context, "/scenario"),
                   ),
-                ShadButton(
-                  width: double.infinity,
-                  leading: const Icon(Icons.info),
-                  child: const Text("Logs"),
-                  onPressed: () => Navigator.pushNamed(context, "/logs"),
-                ),
+               
                 ShadButton(
                   width: double.infinity,
                   leading: const Icon(Icons.exit_to_app),
                   child: const Text("Exit"),
-                  onPressed: () => Navigator.pushNamed(context, "/"),
+                  onPressed: () async {
+                  // Show confirmation dialog
+                  final shouldExit = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Exit Game?'),
+                      content: const Text(
+                        'Are you sure you want to exit the simulation? '
+                        
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.pop(context, false), // Cancel
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () =>
+                              Navigator.pop(context, true), // Confirm
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          child: const Text(
+                            'Exit',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (shouldExit == true) {
+                    Navigator.pushNamed(context, '/'); // Exit the app
+                  }
+                },
                 ),
               ],
             ),

@@ -72,8 +72,8 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     return _cachedPlayerName ?? 'Unknown Player';
   }
 
-  String get _playerName => _cachedPlayerName ?? 'Unknown Player';
-
+  // Cached player name is stored in _cachedPlayerName; use _fetchPlayerName() when
+  // the persisted value is required at log time to avoid race conditions.
  
 
   // ===============================
@@ -475,10 +475,10 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
      _logsNotifier.addGameplayLog(
   device: deviceId,
   deviceType: updatedDevices[deviceIndex].type,
-  eventType: "ERROR",
-  message: "Device went offline during simulation",
-  status: "offline",
-  playerName: _playerName,
+  eventType: "AUTO_RECOVERY",
+  message: "Device auto-recovered (Penalty: -$_autoRecoveryPenalty)",
+  status: "warning",
+  playerName: await _fetchPlayerName(),
 );
       }
     }

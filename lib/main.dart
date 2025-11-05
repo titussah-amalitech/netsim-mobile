@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/core/providers/theme_provider.dart';
 import 'package:netsim_mobile/core/widgets/root_scaffold.dart';
-import 'package:netsim_mobile/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:netsim_mobile/features/dashboard/presentation/screens/scenaioListPlayer_screen.dart';
 import 'package:netsim_mobile/features/leaderboard/presentation/leaderboard_screen.dart';
 import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
 import 'package:netsim_mobile/features/onboarding/presentation/screens/user_setup_screen.dart';

@@ -148,7 +148,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.grey.shade100,
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -206,10 +206,10 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
               ),
               Text(
                 _formatTime(simulationState.remainingTime),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color:Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],

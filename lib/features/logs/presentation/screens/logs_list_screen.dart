@@ -62,12 +62,15 @@ class _LatestLogsListState extends ConsumerState<LatestLogsList> {
                     spacing: 8,
                     children: [
                       ElevatedButton(
+                        
                         onPressed: logs.isEmpty
                             ? null
                             : () async {
                                 final confirmed = await showDialog<bool>(
+
                                   context: context,
                                   builder: (context) => AlertDialog(
+                                    backgroundColor: Theme.of(context).colorScheme.onPrimary,
                                     title: const Text('Clear all logs?'),
                                     content: const Text(
                                       'This will remove all loaded logs. Continue?',
@@ -94,6 +97,8 @@ class _LatestLogsListState extends ConsumerState<LatestLogsList> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -112,6 +117,8 @@ class _LatestLogsListState extends ConsumerState<LatestLogsList> {
                         onPressed: () =>
                             ref.read(latestLogsProvider.notifier).loadMore(),
                         style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -143,6 +150,7 @@ class _LatestLogsListState extends ConsumerState<LatestLogsList> {
                         final log = logs[index];
 
                         return Card(
+                          color:Theme.of(context).colorScheme.onPrimary,
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Row(
@@ -189,11 +197,12 @@ class _LatestLogsListState extends ConsumerState<LatestLogsList> {
                                 ),
 
                                 Container(
+
                                   margin: const EdgeInsets.only(left: 12),
                                   width: 20,
                                   height: 20,
                                   decoration: BoxDecoration(
-                                    color: Colors.transparent,
+                                    color: Theme.of(context).colorScheme.primary,
                                     shape: BoxShape.circle,
                                     border: Border.all(
                                       color: _statusBadgeColor(log.status),

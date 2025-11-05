@@ -50,7 +50,7 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
       height: MediaQuery.of(context).size.height*0.80,
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blueGrey[50],
+        color: Theme.of(context).colorScheme.background,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
