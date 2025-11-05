@@ -13,6 +13,7 @@ class NetworkCanvas extends StatefulWidget {
   final Set<String> activeErrorDeviceIds;
   final Function(String deviceId)? onDeviceTap;
   final Map<String, DeviceWidgetController>? controllers;
+  final bool isPaused;
 
   const NetworkCanvas({
     super.key,
@@ -20,6 +21,7 @@ class NetworkCanvas extends StatefulWidget {
     this.activeErrorDeviceIds = const {},
     this.onDeviceTap,
     this.controllers, required bool showLabels,
+    this.isPaused = false,
   });
   @override
   State<NetworkCanvas> createState() => _NetworkCanvasState();
@@ -45,6 +47,11 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+      if (widget.isPaused) {
+    _controller.stop();
+  } else if (!_controller.isAnimating) {
+    _controller.repeat();
+  }
     return Container(
       width: MediaQuery.of(context).size.width*0.95,
       height: MediaQuery.of(context).size.height*0.80,
@@ -73,46 +80,36 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
             );
            }
            
-           return Stack(
-             children: [
-               // Draw device connections — pass controller as repaint so painter repaints every tick
-               CustomPaint(
-                 painter: NetworkConnectionsPainter(
-                   devices: widget.devices,
-                   animation: _controller, // pass controller as Listenable
-                   offlineDeviceIds: widget.activeErrorDeviceIds,
-                 ),
-                 size: Size(constraints.maxWidth, constraints.maxHeight),
-               ),
-          // Draw device widgets. Use index in the key to guarantee uniqueness
-          // and avoid Duplicate keys when device IDs are non-unique in source data.
-          // Also emit a debug warning when duplicate ids are detected.
-          ...(() {
-            final ids = <String>{};
-            for (var d in widget.devices) {
-              if (ids.contains(d.id)) {
-                // Log once per duplicate occurrence
-                debugPrint('Warning: duplicate device id detected: ${d.id}');
-                break;
-              }
-              ids.add(d.id);
-            }
-
-            return widget.devices.asMap().entries.map((entry) {
-              final idx = entry.key;
-              final device = entry.value;
-              return DeviceWidget(
-                key: ValueKey('${device.id}-$idx'),
-                device: device,
-                hasError: widget.activeErrorDeviceIds.contains(device.id) && !device.status.online,
-                onTap: () => widget.onDeviceTap?.call(device.id),
-                controller: widget.controllers != null ? widget.controllers![device.id] : null,
-              );
-            }).toList();
-          })(),
-        ],
-      );
-        },
+          return IgnorePointer(
+  ignoring: widget.isPaused, // 👈 disable interaction when paused
+  child: Stack(
+    children: [
+      CustomPaint(
+        painter: NetworkConnectionsPainter(
+          devices: widget.devices,
+          animation: _controller,
+          offlineDeviceIds: widget.activeErrorDeviceIds,
+        ),
+        size: Size(constraints.maxWidth, constraints.maxHeight),
+      ),
+      ...widget.devices.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final device = entry.value;
+        return DeviceWidget(
+          key: ValueKey('${device.id}-$idx'),
+          device: device,
+          hasError: widget.activeErrorDeviceIds.contains(device.id) &&
+              !device.status.online,
+          onTap: () => widget.onDeviceTap?.call(device.id),
+          controller: widget.controllers != null
+              ? widget.controllers![device.id]
+              : null,
+        );
+      }).toList(),
+    ],
+  ),
+);
+  },
       ),
     );
   }

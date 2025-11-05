@@ -209,7 +209,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color:Theme.of(context).colorScheme.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -224,14 +224,14 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
               // Control Buttons: Pulse, Pause/Resume
               Row(
                 children: [
-                   ElevatedButton(
+                  ElevatedButton(
                     onPressed: () {
-                          if (simulationState.isRunning) {
+                      if (simulationState.isRunning) {
                         notifier.pauseSimulation();
                       }
                       Navigator.pushNamed(context, '/logs');
                     },
-                       style: ElevatedButton.styleFrom(
+                    style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blueGrey,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -241,13 +241,15 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                         vertical: 12,
                       ),
                     ),
-                    child: const Text('View logs',style: TextStyle(
+                    child: const Text(
+                      'View logs',
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
                   ),
-                   ),
-                   const SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () async {
                       final shouldRestart = await showDialog<bool>(
@@ -264,7 +266,22 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                               child: const Text('Cancel'),
                             ),
                             ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
+                              onPressed: () {
+                                ref
+                                    .read(simulationProvider.notifier)
+                                    .resetSimulation();
+                                Navigator.pop(context);
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SimulationScreen(
+                                      scenario: widget.scenario,
+                                    ),
+                                  ),
+                                );
+                              },
+
+                              //  () => Navigator.pop(context, true),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
                               ),
@@ -431,6 +448,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
             );
           }
         },
+        isPaused: !simulationState.isRunning,
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:netsim_mobile/core/widgets/theme_toggle_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -30,6 +31,10 @@ class _OnboardingState extends State<Onboarding> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        actions: [ThemeToggleButton()],
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
