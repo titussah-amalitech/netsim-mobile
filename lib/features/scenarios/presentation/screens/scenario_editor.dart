@@ -6,6 +6,8 @@ import 'package:netsim_mobile/features/devices/data/models/device_model.dart';
 import 'package:netsim_mobile/features/devices/data/models/device_parameters.dart';
 import 'package:netsim_mobile/features/devices/data/models/device_position.dart';
 import 'package:netsim_mobile/features/devices/data/models/device_status.dart';
+import 'package:netsim_mobile/features/scenarios/data/sources/json_scenario_data_source.dart';
+import 'package:netsim_mobile/features/scenarios/presentation/providers/scenario_provider.dart';
 
 class ScenarioEditorScreen extends ConsumerStatefulWidget {
   const ScenarioEditorScreen({super.key});
@@ -203,8 +205,156 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
         description: 'Created in editor',
       ),
     );
-    // TODO: Use 'scenario' for saving, e.g. PersistentScenarios.save(scenario)
-    print('Scenario saved: ${scenario.name}');
+    try {
+      // First save to documents using JsonScenarioDataSource
+      final dataSource = JsonScenarioDataSource();
+      await dataSource.writeScenarioToDocuments(scenario);
+
+      // Update the notifier to reload scenarios
+      final notifier = ref.read(scenarioNotifierProvider.notifier);
+      await notifier.loadScenarios();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Scenario "${scenario.name}" saved'),
+            action: SnackBarAction(
+              label: 'View Scenarios',
+              onPressed: () {
+                Navigator.pop(context); // Return to scenario list
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving scenario: $e')),
+        );
+      }
+    }
+  }
+
+  // -------------------------------------------------------
+  // DEVICE PARAMETER EDITOR
+  // -------------------------------------------------------
+  Future<void> _editDeviceParameters(Device device) async {
+  // local dialog state will be used instead of text controllers
+
+    int ping = device.parameters.pingInterval;
+    int latency = device.parameters.latencyThreshold;
+    double failure = device.parameters.failureProbability;
+    int traffic = device.parameters.trafficLoad;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            title: Text('Edit ${device.type} Parameters'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Ping interval (increment/decrement)
+                Row(
+                  children: [
+                    Expanded(child: Text('Ping interval (s)')),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline),
+                      onPressed: () => setStateDialog(() => ping = (ping - 1).clamp(1, 9999)),
+                    ),
+                    Text('$ping'),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline),
+                      onPressed: () => setStateDialog(() => ping = (ping + 1).clamp(1, 9999)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Latency threshold
+                Row(
+                  children: [
+                    Expanded(child: Text('Latency threshold (ms)')),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline),
+                      onPressed: () => setStateDialog(() => latency = (latency - 1).clamp(0, 60000)),
+                    ),
+                    Text('$latency'),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline),
+                      onPressed: () => setStateDialog(() => latency = (latency + 1).clamp(0, 60000)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Failure probability (slider)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Failure probability'),
+                    Slider(
+                      value: failure.clamp(0.0, 1.0),
+                      min: 0.0,
+                      max: 1.0,
+                      divisions: 100,
+                      label: failure.toStringAsFixed(2),
+                      onChanged: (v) => setStateDialog(() => failure = v),
+                    ),
+                    Text('Value: ${failure.toStringAsFixed(2)}'),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Traffic load
+                Row(
+                  children: [
+                    Expanded(child: Text('Traffic load')),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline),
+                      onPressed: () => setStateDialog(() => traffic = (traffic - 1).clamp(0, 1000000)),
+                    ),
+                    Text('$traffic'),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline),
+                      onPressed: () => setStateDialog(() => traffic = (traffic + 1).clamp(0, 1000000)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+              ElevatedButton(onPressed: () {
+                // pass values back via outer scope
+                Navigator.pop(context, true);
+              }, child: const Text('Save')),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (saved != true) return;
+
+    final updated = device.copyWith(
+      parameters: device.parameters.copyWith(
+        pingInterval: ping,
+        latencyThreshold: latency,
+        failureProbability: failure,
+        trafficLoad: traffic,
+      ),
+    );
+
+    final idx = _devices.indexWhere((d) => d.id == device.id);
+    if (idx == -1) return;
+
+    setState(() {
+      _devices[idx] = updated;
+      _pushHistory();
+    });
   }
 
   IconData getDeviceIcon(String type) {
@@ -336,23 +486,25 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
                           return Positioned(
                             left: pos.x.toDouble(),
                             top: pos.y.toDouble(),
-                            child: GestureDetector(
-                              onTap: () {
-                                if (_selectedDeviceId == null) {
-                                  setState(() => _selectedDeviceId = d.id);
-                                } else if (_selectedDeviceId == d.id) {
-                                  setState(() => _selectedDeviceId = null);
-                                } else {
-                                  _toggleConnection(_selectedDeviceId!, d.id);
-                                  setState(() => _selectedDeviceId = null);
-                                }
-                              },
-                              onPanUpdate: (details) {
-                                final pos = _globalToLocal(details.globalPosition);
-                                _updateDevicePosition(d.id, pos);
-                              },
-                              child: _deviceChip(d.type, highlighted: selected),
-                            ),
+                              child: GestureDetector(
+                                // Tap to edit parameters, long-press to select/connect
+                                onTap: () => _editDeviceParameters(d),
+                                onLongPress: () {
+                                  if (_selectedDeviceId == null) {
+                                    setState(() => _selectedDeviceId = d.id);
+                                  } else if (_selectedDeviceId == d.id) {
+                                    setState(() => _selectedDeviceId = null);
+                                  } else {
+                                    _toggleConnection(_selectedDeviceId!, d.id);
+                                    setState(() => _selectedDeviceId = null);
+                                  }
+                                },
+                                onPanUpdate: (details) {
+                                  final pos = _globalToLocal(details.globalPosition);
+                                  _updateDevicePosition(d.id, pos);
+                                },
+                                child: _deviceChip(d.type, highlighted: selected),
+                              ),
                           );
                         }).toList(),
                       ],

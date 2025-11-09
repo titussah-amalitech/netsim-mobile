@@ -39,6 +39,54 @@ class JsonScenarioDataSource {
     }
   }
 
+  Future<List<Scenario>> loadScenariosFromDocuments() async {
+    try {
+      final path = await _localPath;
+      final directory = Directory('$path/scenarios');
+      
+      if (!await directory.exists()) {
+        return [];
+      }
+
+      final files = await directory
+          .list()
+          .where((entity) => entity is File && entity.path.endsWith('.json'))
+          .toList();
+
+      final List<Scenario> scenarios = [];
+      for (final file in files) {
+        try {
+          final contents = await (file as File).readAsString();
+          final scenario = Scenario.fromJsonString(contents);
+          scenarios.add(scenario);
+        } catch (e) {
+          print("Error reading scenario from ${file.path}: $e");
+          continue;
+        }
+      }
+
+      return scenarios;
+    } catch (e) {
+      print("Error loading scenarios from documents: $e");
+      return [];
+    }
+  }
+
+  Future<List<Scenario>> loadAllScenarios() async {
+    final assetScenarios = await loadScenariosFromAssets();
+    final docScenarios = await loadScenariosFromDocuments();
+    
+    // Combine both, preferring document versions over asset versions for same names
+    final Map<String, Scenario> merged = {};
+    for (final s in assetScenarios) {
+      merged[s.name] = s;
+    }
+    for (final s in docScenarios) {
+      merged[s.name] = s; // Overwrite asset version if exists
+    }
+    
+    return merged.values.toList();
+  }
   Future<String> get _localPath async {
     final directory = await getApplicationDocumentsDirectory();
     return directory.path;

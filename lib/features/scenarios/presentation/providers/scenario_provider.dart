@@ -17,7 +17,7 @@ class ScenarioNotifier extends Notifier<AsyncValue<List<Scenario>>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final dataSource = ref.read(scenarioDataSourceProvider);
-      return await dataSource.loadScenariosFromAssets();
+      return await dataSource.loadAllScenarios();
     });
   } 
 
