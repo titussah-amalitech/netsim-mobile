@@ -33,7 +33,7 @@ class SoundService {
     if (_isMuted || _isBackgroundMusicPlaying) return;
     _isBackgroundMusicPlaying = true;
     await _bgPlayer.setReleaseMode(ReleaseMode.loop); // Makes the audio loop
-    await _bgPlayer.play(AssetSource('sounds/alarm2.mp3'));
+    await _bgPlayer.play(AssetSource('sounds/alarm.mp3'));
     await _bgPlayer.setVolume(0.3); // Set volume to 30%
   }
 

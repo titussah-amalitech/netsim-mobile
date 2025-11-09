@@ -7,6 +7,7 @@ import 'package:netsim_mobile/features/leaderboard/presentation/leaderboard_scre
 import 'package:netsim_mobile/features/onboarding/presentation/screens/onboarding.dart';
 import 'package:netsim_mobile/features/onboarding/presentation/screens/user_setup_screen.dart';
 import 'package:netsim_mobile/features/scenarios/presentation/game_view.dart';
+import 'package:netsim_mobile/features/scenarios/presentation/screens/scenario_editor.dart';
 import 'package:netsim_mobile/features/scenarios/presentation/screens/scenario_list.dart';
 import 'package:netsim_mobile/features/logs/presentation/screens/logs_list_screen.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -44,6 +45,7 @@ class MyApp extends ConsumerWidget {
         "/leaderboard": (context) => LeaderboardScreen(),
         "/onboarding": (context) => const Onboarding(),
         "/game": (context) => const GameView(),
+        "/createScenario": (context) => const ScenarioEditorScreen(),
         "/dashboard": (context) => const ScenarioListScreenPlayer(),
         "/scenario": (context) => const ScenarioListScreen(),
         "/logs": (context) => const LatestLogsList(),

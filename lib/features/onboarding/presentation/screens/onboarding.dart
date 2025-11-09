@@ -69,6 +69,13 @@ class _OnboardingState extends State<Onboarding> {
                     onPressed: () => Navigator.pushNamed(context, "/scenario"),
                   ),
                
+                  ShadButton(
+                    width: double.infinity,
+                    leading: const Icon(Icons.edit),
+                    child: const Text("Create Scenarios"),
+                    onPressed: () => Navigator.pushNamed(context, "/createScenario"),
+                  ),
+               
                 ShadButton(
                   width: double.infinity,
                   leading: const Icon(Icons.exit_to_app),
