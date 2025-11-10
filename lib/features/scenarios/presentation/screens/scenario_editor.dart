@@ -269,6 +269,7 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
       timeLimit: int.tryParse(timeController.text.trim()) ?? 300,
       score: 0,
       devices: List<Device>.from(_devices),
+      connections: List<List<String>>.from(_connections.map((c) => List<String>.from(c))),
       metadata: Metadata(
         createdBy: 'admin',
         createdAt: DateTime.now(),

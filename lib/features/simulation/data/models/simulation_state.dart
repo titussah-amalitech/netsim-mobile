@@ -5,6 +5,7 @@ import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart
 class SimulationState {
   final Scenario? currentScenario;
   final List<Device> devices;
+  final List<List<String>> connections;
   final int score;
   final int remainingTime; // in seconds
   // Track multiple concurrent errors: map deviceId -> error start time
@@ -20,6 +21,7 @@ class SimulationState {
   const SimulationState({
     this.currentScenario,
     this.devices = const [],
+    this.connections = const [],
     this.score = 0,
     this.remainingTime = 0,
     this.activeErrorStartTimes = const {},
@@ -45,6 +47,7 @@ class SimulationState {
     return SimulationState(
       currentScenario: currentScenario ?? this.currentScenario,
       devices: devices ?? this.devices,
+      connections: this.connections,
       score: score ?? this.score,
       remainingTime: remainingTime ?? this.remainingTime,
       activeErrorStartTimes: activeErrorStartTimes ?? this.activeErrorStartTimes,

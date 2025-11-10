@@ -10,6 +10,7 @@ import 'package:netsim_mobile/features/devices/data/models/device_position.dart'
 
 class NetworkCanvas extends StatefulWidget {
   final List<Device> devices;
+  final List<List<String>> connections;
   final Set<String> activeErrorDeviceIds;
   final Function(String deviceId)? onDeviceTap;
   final Map<String, DeviceWidgetController>? controllers;
@@ -18,9 +19,11 @@ class NetworkCanvas extends StatefulWidget {
   const NetworkCanvas({
     super.key,
     required this.devices,
+    required this.connections,
     this.activeErrorDeviceIds = const {},
     this.onDeviceTap,
-    this.controllers, required bool showLabels,
+    this.controllers,
+    required bool showLabels,
     this.isPaused = false,
   });
   @override
@@ -87,6 +90,7 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
       CustomPaint(
         painter: NetworkConnectionsPainter(
           devices: widget.devices,
+          connections: widget.connections,
           animation: _controller,
           offlineDeviceIds: widget.activeErrorDeviceIds,
         ),
@@ -333,11 +337,13 @@ class _DeviceWidgetState extends State<DeviceWidget>
 
 class NetworkConnectionsPainter extends CustomPainter {
   final List<Device> devices;
+  final List<List<String>> connections;
   final Listenable animation;
   final Set<String> offlineDeviceIds;
 
   NetworkConnectionsPainter({
     required this.devices,
+    required this.connections,
     required this.animation,
     this.offlineDeviceIds = const {},
   }) : super(repaint: animation);
@@ -354,21 +360,24 @@ class NetworkConnectionsPainter extends CustomPainter {
       phase = 0.0;
     }
 
-    for (var i = 0; i < devices.length; i++) {
+    // Draw all connections from the saved connection list
+    for (final connection in connections) {
+      final deviceA = devices.firstWhere((d) => d.id == connection[0]);
+      final deviceB = devices.firstWhere((d) => d.id == connection[1]);
+      
       final start = Offset(
-        devices[i].position.x.toDouble(),
-        devices[i].position.y.toDouble(),
+        deviceA.position.x.toDouble(),
+        deviceA.position.y.toDouble(),
       );
-      final nextIndex = (i + 1) % devices.length;
       final end = Offset(
-        devices[nextIndex].position.x.toDouble(),
-        devices[nextIndex].position.y.toDouble(),
+        deviceB.position.x.toDouble(),
+        deviceB.position.y.toDouble(),
       );
 
-      final isOffline = offlineDeviceIds.contains(devices[i].id) ||
-          offlineDeviceIds.contains(devices[nextIndex].id) ||
-          !devices[i].status.online ||
-          !devices[nextIndex].status.online;
+      final isOffline = offlineDeviceIds.contains(deviceA.id) ||
+          offlineDeviceIds.contains(deviceB.id) ||
+          !deviceA.status.online ||
+          !deviceB.status.online;
 
       final paint = Paint()
         ..strokeWidth = 2

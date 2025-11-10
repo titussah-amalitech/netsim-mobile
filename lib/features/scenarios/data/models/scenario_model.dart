@@ -9,6 +9,7 @@ class Scenario {
   final int timeLimit;
   final int score;
   final List<Device> devices;
+  final List<List<String>> connections;
   final Metadata metadata;
 
   Scenario({
@@ -17,6 +18,7 @@ class Scenario {
     required this.timeLimit,
     required this.score,
     required this.devices,
+    this.connections = const [],
     required this.metadata,
   });
 
@@ -28,6 +30,9 @@ class Scenario {
     devices: (json['devices'] as List<dynamic>? ?? [])
         .map((e) => Device.fromJson(e as Map<String, dynamic>))
         .toList(),
+    connections: (json['connections'] as List<dynamic>? ?? [])
+        .map((e) => (e as List<dynamic>).map((s) => s as String).toList())
+        .toList(),
     metadata: Metadata.fromJson(json['metadata'] as Map<String, dynamic>),
   );
 
@@ -37,6 +42,7 @@ class Scenario {
     'timeLimit': timeLimit,
     'score': score,
     'devices': devices.map((d) => d.toJson()).toList(),
+    'connections': connections.map((c) => c.toList()).toList(),
     'metadata': metadata.toJson(),
   };
 

@@ -405,6 +405,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
       child: NetworkCanvas(
         showLabels: true,
         devices: simulationState.devices,
+        connections: simulationState.connections,
         activeErrorDeviceIds: simulationState.activeErrorStartTimes.keys
             .toSet(),
         controllers: _deviceControllers,

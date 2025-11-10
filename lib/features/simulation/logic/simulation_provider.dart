@@ -115,7 +115,8 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     state = SimulationState(
       currentScenario: scenario,
       devices: positionedDevices,
-      remainingTime: 1 * 60,
+      connections: scenario.connections,
+      remainingTime: scenario.timeLimit,
       isRunning: true,
     );
 
