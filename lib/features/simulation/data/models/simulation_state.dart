@@ -1,5 +1,6 @@
 import 'package:netsim_mobile/features/devices/data/models/device_model.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
+import 'package:netsim_mobile/features/simulation/data/models/device_error.dart';
 
 /// Represents the current state of an active network simulation game
 class SimulationState {
@@ -9,7 +10,7 @@ class SimulationState {
   final int score;
   final int remainingTime; // in seconds
   // Track multiple concurrent errors: map deviceId -> error start time
-  final Map<String, DateTime> activeErrorStartTimes;
+  final Map<String, DeviceError> activeErrors;
   final bool isRunning;
   final bool isFinished;
   final DateTime? lastErrorTime; // Track when the last error was generated
@@ -24,7 +25,7 @@ class SimulationState {
     this.connections = const [],
     this.score = 0,
     this.remainingTime = 0,
-    this.activeErrorStartTimes = const {},
+    this.activeErrors = const {},
     this.isRunning = false,
     this.isFinished = false,
     this.lastErrorTime,
@@ -35,9 +36,10 @@ class SimulationState {
   SimulationState copyWith({
     Scenario? currentScenario,
     List<Device>? devices,
+    List<List<String>>? connections,
     int? score,
     int? remainingTime,
-  Map<String, DateTime>? activeErrorStartTimes,
+    Map<String, DeviceError>? activeErrors,
     bool? isRunning,
     bool? isFinished,
     DateTime? lastErrorTime,
@@ -47,10 +49,10 @@ class SimulationState {
     return SimulationState(
       currentScenario: currentScenario ?? this.currentScenario,
       devices: devices ?? this.devices,
-      connections: this.connections,
+      connections: connections ?? this.connections,
       score: score ?? this.score,
       remainingTime: remainingTime ?? this.remainingTime,
-      activeErrorStartTimes: activeErrorStartTimes ?? this.activeErrorStartTimes,
+      activeErrors: activeErrors ?? this.activeErrors,
       isRunning: isRunning ?? this.isRunning,
       isFinished: isFinished ?? this.isFinished,
       lastErrorTime: lastErrorTime ?? this.lastErrorTime,

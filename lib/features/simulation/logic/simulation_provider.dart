@@ -2,17 +2,16 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:riverpod/legacy.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:netsim_mobile/features/devices/data/models/device_model.dart';
-import 'package:netsim_mobile/features/devices/data/models/device_position.dart';
 import 'package:netsim_mobile/features/devices/data/models/device_status.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
 import 'package:netsim_mobile/features/simulation/data/models/simulation_state.dart';
+import 'package:netsim_mobile/features/simulation/data/models/device_error.dart';
 import 'package:netsim_mobile/features/simulation/services/sound_service.dart';
 import 'package:netsim_mobile/features/leaderboard/presentation/providers/leaderboard_provider.dart';
 import 'package:netsim_mobile/features/logs/logic/logs_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:shared_preferences.dart';
 
 /// Provider for the sound service
 final soundServiceProvider = Provider<SoundService>((ref) => SoundService());
@@ -21,8 +20,8 @@ final soundServiceProvider = Provider<SoundService>((ref) => SoundService());
 final simulationProvider = StateNotifierProvider<SimulationNotifier, SimulationState>((ref) {
   final soundService = ref.watch(soundServiceProvider);
   final leaderboardController = ref.watch(leaderboardControllerProvider);
-  final latestLogs = ref.watch(latestLogsProvider.notifier);
-  return SimulationNotifier(soundService, leaderboardController, latestLogs);
+  final logsNotifier = ref.watch(latestLogsProvider.notifier);
+  return SimulationNotifier(soundService, leaderboardController, logsNotifier);
 });
 
 /// Simulation logic controller using Riverpod's StateNotifier.
@@ -33,6 +32,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   final SoundService _soundService;
   final LeaderboardController _leaderboardController;
   final LatestLogsNotifier _logsNotifier;
+  
   // Grace period for player to manually fix an error (in seconds)
   static const int _errorGracePeriodSeconds = 30;
   // Penalty points when a device auto-recovers after grace period
@@ -40,7 +40,11 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
 
   String? _cachedPlayerName;
   
-  SimulationNotifier(this._soundService, this._leaderboardController, this._logsNotifier) : super(const SimulationState()) {
+  SimulationNotifier(
+    this._soundService, 
+    this._leaderboardController, 
+    this._logsNotifier,
+  ) : super(const SimulationState()) {
     // Start background music when the notifier is created
     _soundService.startBackgroundMusic();
     // Cache the player name on initialization
@@ -60,7 +64,6 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   }
 
   /// Helper to retrieve the currently active player name from SharedPreferences.
-  /// Falls back to the cached name or 'Unknown Player' if not available.
   Future<String> _fetchPlayerName() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -72,9 +75,85 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     return _cachedPlayerName ?? 'Unknown Player';
   }
 
-  // Cached player name is stored in _cachedPlayerName; use _fetchPlayerName() when
-  // the persisted value is required at log time to avoid race conditions.
- 
+  /// Validates if the fix attempt is correct for the given error type
+  bool _validateFix(DeviceError error, Map<String, dynamic> fixData) {
+    switch (error.type) {
+      case DeviceErrorType.highLatency:
+        final newLatency = fixData['newLatency'] as int;
+        return newLatency < (error.metadata['latencyValue'] as int);
+
+      case DeviceErrorType.packetLoss:
+        final steps = fixData['completedSteps'] as List<dynamic>;
+        return steps.length == 3;
+
+      case DeviceErrorType.overload:
+        final newLoad = fixData['newLoad'] as int;
+        return newLoad < 70;
+
+      case DeviceErrorType.pingTimeout:
+        final pingCount = fixData['pingCount'] as int;
+        return pingCount >= 3;
+
+      case DeviceErrorType.offline:
+        // All four parameters must be present and within valid ranges
+        final ping = fixData['pingInterval'] as int?;
+        final latency = fixData['latencyThreshold'] as int?;
+        final overload = fixData['overload'] as int?;
+        final traffic = fixData['trafficLoad'] as int?;
+        
+        if (ping == null || latency == null || overload == null || traffic == null) {
+          return false;
+        }
+        
+        final bool pingOK = ping >= 40 && ping <= 80;
+        final bool latencyOK = latency >= 60 && latency <= 120;
+        final bool overloadOK = overload >= 10 && overload <= 60;
+        final bool trafficOK = traffic >= 20 && traffic <= 70;
+        
+        return pingOK && latencyOK && overloadOK && trafficOK;
+
+      case DeviceErrorType.routingError:
+        final selectedRoute = fixData['selectedRoute'] as String;
+        return selectedRoute == error.metadata['correctRoute'];
+    }
+  }
+
+  /// Generates appropriate metadata for each error type
+  Map<String, dynamic> _generateErrorMetadata(DeviceErrorType type, Device device) {
+    switch (type) {
+      case DeviceErrorType.highLatency:
+        return {'latencyValue': 120 + _random.nextInt(50)}; // 120-170ms
+      
+      case DeviceErrorType.packetLoss:
+        return {'lossRate': 15 + _random.nextInt(25)}; // 15-40%
+      
+      case DeviceErrorType.overload:
+        return {'currentLoad': 85 + _random.nextInt(15)}; // 85-100%
+      
+      case DeviceErrorType.pingTimeout:
+        return {'timeoutCount': 3 + _random.nextInt(3)}; // 3-6 timeouts
+      
+      case DeviceErrorType.offline:
+        // Provide all four parameters for offline error
+        return {
+          'pingInterval': device.parameters.pingInterval,
+          'latencyThreshold': device.parameters.latencyThreshold,
+          'overload': device.parameters.trafficLoad, // Using trafficLoad as overload
+          'trafficLoad': device.parameters.trafficLoad,
+        };
+      
+      case DeviceErrorType.routingError:
+        final otherDevices = state.devices
+            .where((d) => d.id != device.id)
+            .map((d) => d.id)
+            .toList();
+        return {
+          'correctRoute': otherDevices.isEmpty 
+              ? 'Device_1' 
+              : otherDevices[_random.nextInt(otherDevices.length)]
+        };
+    }
+  }
 
   // ===============================
   //  Start Simulation
@@ -85,37 +164,24 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     final deviceCount = scenario.devices.length;
     if (deviceCount == 0) return;
 
-    const radius = 120;
-    const centerX = 400;
-    const centerY = 300;
-
     debugPrint('Starting simulation with $deviceCount devices');
 
-    // Position devices in a circular layout
-    final positionedDevices = List.generate(deviceCount, (index) {
-      final angle = (2 * pi * index) / deviceCount;
-      final x = centerX + (radius * cos(angle)).round();
-      final y = centerY + (radius * sin(angle)).round();
-
-      final device = scenario.devices[index];
-      return Device(
-        id: device.id,
-        type: device.type,
-        position: Position(x: x, y: y),
-        parameters: device.parameters,
+    // Use the saved device positions but initialize with online status
+    final positionedDevices = scenario.devices.map((device) => 
+      device.copyWith(
         status: Status(
           online: true,
           latency: 0,
           lastChecked: DateTime.now(),
         ),
-      );
-    });
+      )
+    ).toList();
 
     // Set initial state
     state = SimulationState(
       currentScenario: scenario,
       devices: positionedDevices,
-      connections: scenario.connections,
+      connections: scenario.connections ?? [],
       remainingTime: scenario.timeLimit,
       isRunning: true,
     );
@@ -138,10 +204,8 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     );
 
     _errorTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) async {
-        await _generateRandomError();
-      },
+      const Duration(seconds: 30),
+      (_) => _generateRandomError(),
     );
   }
 
@@ -166,14 +230,14 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     if (!state.isRunning) return;
 
     if (state.lastErrorTime != null &&
-        DateTime.now().difference(state.lastErrorTime!).inSeconds < 15) {
+        DateTime.now().difference(state.lastErrorTime!).inSeconds < 30) {
       return;
     }
 
     final devices = state.devices;
     if (devices.isEmpty) return;
 
-    final currentErrors = state.activeErrorStartTimes.keys.toSet();
+    final currentErrors = state.activeErrors.keys.toSet();
     final candidateDevices =
         devices.where((d) => d.status.online && !currentErrors.contains(d.id)).toList();
     if (candidateDevices.isEmpty) return;
@@ -181,6 +245,17 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     final errorDevice = candidateDevices[_random.nextInt(candidateDevices.length)];
     final deviceIndex = devices.indexWhere((d) => d.id == errorDevice.id);
     if (deviceIndex == -1) return;
+
+    // Generate a random error type
+    final errorType = DeviceErrorType.values[_random.nextInt(DeviceErrorType.values.length)];
+    
+    // Create error with appropriate metadata
+    final error = DeviceError(
+      deviceId: errorDevice.id,
+      type: errorType,
+      startTime: DateTime.now(),
+      metadata: _generateErrorMetadata(errorType, errorDevice),
+    );
 
     final updatedDevices = List<Device>.from(devices);
     updatedDevices[deviceIndex] = errorDevice.copyWith(
@@ -191,49 +266,92 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
       ),
     );
 
-    final updatedStartTimes = Map<String, DateTime>.from(state.activeErrorStartTimes);
-    updatedStartTimes[errorDevice.id] = DateTime.now();
+    final updatedErrors = Map<String, DeviceError>.from(state.activeErrors);
+    updatedErrors[errorDevice.id] = error;
 
     state = state.copyWith(
       devices: updatedDevices,
-      activeErrorStartTimes: updatedStartTimes,
+      activeErrors: updatedErrors,
       lastErrorTime: DateTime.now(),
-      recentErrors: [errorDevice.id],
+      recentErrors: [...state.recentErrors, errorDevice.id],
     );
 
-    // Log the error event (ensure we use the current persisted player name)
-    final _player = await _fetchPlayerName();
+    // Log the error event
+    final player = await _fetchPlayerName();
     _logsNotifier.addGameplayLog(
       device: errorDevice.id,
       deviceType: errorDevice.type,
       eventType: "ERROR",
-      message: "Device went offline during simulation",
+      message: "Device ${errorType.name} error occurred",
       status: "offline",
-      playerName: _player,
+      playerName: player,
     );
 
     _soundService.playErrorSound();
-    debugPrint(' Error generated on ${errorDevice.id}');
+    debugPrint('Error generated on ${errorDevice.id}');
   }
 
   // ===============================
   //  Fix Device
   // ===============================
-  Future<(bool success, int points)> fixDeviceWithLatency(String deviceId, double latency) async {
-    if (!state.isRunning || !state.activeErrorStartTimes.containsKey(deviceId)) {
+  Future<(bool success, int points)> fixDevice(String deviceId, Map<String, dynamic> fixData) async {
+    if (!state.isRunning || !state.activeErrors.containsKey(deviceId)) {
       return (false, 0);
     }
 
-    if (latency < 80 || latency > 100) {
+    final error = state.activeErrors[deviceId]!;
+    final durationSeconds = DateTime.now().difference(error.startTime).inSeconds;
+
+    // Validate the fix first
+    final success = _validateFix(error, fixData);
+    if (!success) {
       return (false, 0);
     }
 
-    final start = state.activeErrorStartTimes[deviceId] ?? DateTime.now();
-    final durationSeconds = DateTime.now().difference(start).inSeconds;
+    int basePoints = 0;
+    String fixMessage = '';
 
-    final basePoints = (100 - (durationSeconds * 10)).clamp(10, 100);
-    final bonus = 100 - (latency - 90).abs();
-    final totalPoints = (basePoints + (bonus / 10)).clamp(10, 150).toInt();
+    switch (error.type) {
+      case DeviceErrorType.highLatency:
+        final newLatency = fixData['newLatency'] as int;
+        basePoints = (100 - (durationSeconds * 10)).clamp(10, 100);
+        fixMessage = "Latency reduced to ${newLatency}ms";
+        break;
+
+      case DeviceErrorType.packetLoss:
+        final steps = fixData['completedSteps'] as List<String>;
+        basePoints = (120 - (durationSeconds * 8)).clamp(20, 120);
+        fixMessage = "Packet loss resolved (Steps: ${steps.join(', ')})";
+        break;
+
+      case DeviceErrorType.overload:
+        final newLoad = fixData['newLoad'] as int;
+        basePoints = (110 - (durationSeconds * 9)).clamp(15, 110);
+        fixMessage = "Traffic load reduced to $newLoad%";
+        break;
+
+      case DeviceErrorType.pingTimeout:
+        final pingCount = fixData['pingCount'] as int;
+        basePoints = (130 - (durationSeconds * 7)).clamp(25, 130);
+        fixMessage = "Connection restored after $pingCount pings";
+        break;
+
+      case DeviceErrorType.offline:
+        final ping = fixData['pingInterval'] as int;
+        final latency = fixData['latencyThreshold'] as int;
+        final overload = fixData['overload'] as int;
+        final traffic = fixData['trafficLoad'] as int;
+
+        basePoints = (150 - (durationSeconds * 6)).clamp(50, 150);
+        fixMessage = "Device restored: ping=$ping, latency=$latency, overload=$overload, traffic=$traffic";
+        break;
+
+      case DeviceErrorType.routingError:
+        final selectedRoute = fixData['selectedRoute'] as String;
+        basePoints = (140 - (durationSeconds * 5)).clamp(40, 140);
+        fixMessage = "Routing corrected to $selectedRoute";
+        break;
+    }
 
     final updatedDevices = List<Device>.from(state.devices);
     final deviceIndex = updatedDevices.indexWhere((d) => d.id == deviceId);
@@ -242,34 +360,38 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     updatedDevices[deviceIndex] = updatedDevices[deviceIndex].copyWith(
       status: Status(
         online: true,
-        latency: latency.toInt(),
+        latency: 0,
         lastChecked: DateTime.now(),
       ),
     );
 
-    final updatedStartTimes = Map<String, DateTime>.from(state.activeErrorStartTimes);
-    updatedStartTimes.remove(deviceId);
+    final updatedErrors = Map<String, DeviceError>.from(state.activeErrors);
+    updatedErrors.remove(deviceId);
+
+    // Remove from recent errors if present
+    final updatedRecentErrors = List<String>.from(state.recentErrors)..remove(deviceId);
 
     state = state.copyWith(
       devices: updatedDevices,
-      score: state.score + totalPoints,
-      activeErrorStartTimes: updatedStartTimes,
+      score: state.score + basePoints,
+      activeErrors: updatedErrors,
+      recentErrors: updatedRecentErrors,
     );
 
-    // Log the recovery event (use persisted player name to associate logs correctly)
-    final _player = await _fetchPlayerName();
+    // Log the recovery event
+    final player = await _fetchPlayerName();
     _logsNotifier.addGameplayLog(
       device: deviceId,
       deviceType: updatedDevices[deviceIndex].type,
       eventType: "RECOVERY",
-      message: "Device restored manually (Latency: ${latency}ms, Points: +$totalPoints)",
+      message: "Device restored manually ($fixMessage, Points: +$basePoints)",
       status: "online",
-      playerName: _player,
+      playerName: player,
     );
 
     _soundService.playSuccessSound();
-    debugPrint('Fixed $deviceId | +$totalPoints points | Total: ${state.score}');
-    return (true, totalPoints);
+    debugPrint('Fixed $deviceId | +$basePoints points | Total: ${state.score}');
+    return (true, basePoints);
   }
 
   // ===============================
@@ -282,25 +404,32 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
       _gameTimer = null;
       _errorTimer = null;
 
-      state = state.copyWith(isRunning: false, isFinished: true);
-      _soundService.stopBackgroundMusic();
       // Get devices that need auto-recovery
-      final expiredDevices = state.activeErrorStartTimes.entries
-          .where((entry) => DateTime.now().difference(entry.value).inSeconds > _errorGracePeriodSeconds)
+      final expiredDevices = state.activeErrors.entries
+          .where((entry) => DateTime.now().difference(entry.value.startTime).inSeconds > _errorGracePeriodSeconds)
           .map((entry) => entry.key)
           .toList();
 
+      var finalScore = state.score;
+      
       if (expiredDevices.isNotEmpty) {
         // Apply penalty for each expired device
-        final penaltyScore = max(0, state.score - (expiredDevices.length * _autoRecoveryPenalty));
+        finalScore = max(0, state.score - (expiredDevices.length * _autoRecoveryPenalty));
+      }
 
-        state = state.copyWith(
-          score: penaltyScore,
-          recentAutoRecoveredDevices: expiredDevices,
-        );
+      // Update state first
+      state = state.copyWith(
+        isRunning: false, 
+        isFinished: true,
+        score: finalScore,
+        recentAutoRecoveredDevices: expiredDevices,
+      );
 
-        // Log auto-recoveries
-        final _player = await _fetchPlayerName();
+      _soundService.stopBackgroundMusic();
+
+      // Log auto-recoveries
+      if (expiredDevices.isNotEmpty) {
+        final player = await _fetchPlayerName();
         for (final deviceId in expiredDevices) {
           final device = state.devices.firstWhere((d) => d.id == deviceId);
           _logsNotifier.addGameplayLog(
@@ -309,27 +438,27 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
             eventType: "AUTO_RECOVERY",
             message: "Device auto-recovered (Penalty: -$_autoRecoveryPenalty)",
             status: "warning",
-            playerName: _player,
+            playerName: player,
           );
         }
-    }
+      }
 
-    _soundService.playGameOverSound();
+      _soundService.playGameOverSound();
 
       // Update leaderboard with the final score
       final prefs = await SharedPreferences.getInstance();
       final playerName = prefs.getString('userName');
       
       if (playerName == null || playerName.isEmpty) {
-        debugPrint(' Warning: userName not found in SharedPreferences');
+        debugPrint('Warning: userName not found in SharedPreferences');
         return;
       }
 
-      debugPrint('Updating leaderboard: Player=$playerName, Score=${state.score}');
-      await _leaderboardController.updateLeaderboard(playerName, state.score);
-      debugPrint(' Leaderboard updated successfully');
+      debugPrint('Updating leaderboard: Player=$playerName, Score=$finalScore');
+      await _leaderboardController.updateLeaderboard(playerName, finalScore);
+      debugPrint('Leaderboard updated successfully');
     } catch (e, stackTrace) {
-      debugPrint(' Error updating leaderboard: $e');
+      debugPrint('Error updating leaderboard: $e');
       debugPrint('Stack trace: $stackTrace');
     } finally {
       debugPrint('Simulation Ended | Final Score: ${state.score}');
@@ -337,7 +466,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   }
 
   // ===============================
-  //  Pause /  Resume / Reset
+  //  Pause / Resume / Reset
   // ===============================
   void pauseSimulation() {
     if (!state.isRunning || state.isFinished) return;
@@ -348,7 +477,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     _errorTimer = null;
 
     state = state.copyWith(isRunning: false);
-    debugPrint(' Simulation paused');
+    debugPrint('Simulation paused');
   }
 
   void resumeSimulation() {
@@ -356,7 +485,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
 
     _startTimers();
     state = state.copyWith(isRunning: true);
-    debugPrint(' Simulation resumed');
+    debugPrint('Simulation resumed');
   }
 
   void pulse() {
@@ -364,75 +493,36 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
 
     if (state.remainingTime > 0) {
       state = state.copyWith(remainingTime: state.remainingTime - 1);
-      debugPrint(' Pulse tick: ${state.remainingTime}s left');
+      debugPrint('Pulse tick: ${state.remainingTime}s left');
     } else {
       endSimulation();
       return;
     }
 
-    _maybeGenerateRandomError();
+    // Use the existing error generation logic instead of duplicating it
+    _generateRandomError();
 
     if (!state.isRunning) {
       resumeSimulation();
     }
   }
 
-  void _maybeGenerateRandomError() {
-    if (state.lastErrorTime != null &&
-        DateTime.now().difference(state.lastErrorTime!).inSeconds < 15) {
-      return;
-    }
-
-    final devices = state.devices;
-    if (devices.isEmpty) return;
-
-    final currentErrors = state.activeErrorStartTimes.keys.toSet();
-    final candidateDevices =
-        devices.where((d) => d.status.online && !currentErrors.contains(d.id)).toList();
-    if (candidateDevices.isEmpty) return;
-
-    final errorDevice = candidateDevices[_random.nextInt(candidateDevices.length)];
-    final deviceIndex = devices.indexWhere((d) => d.id == errorDevice.id);
-    if (deviceIndex == -1) return;
-
-    final updatedDevices = List<Device>.from(devices);
-    updatedDevices[deviceIndex] = errorDevice.copyWith(
-      status: Status(
-        online: false,
-        latency: errorDevice.status.latency,
-        lastChecked: DateTime.now(),
-      ),
-    );
-
-    final updatedStartTimes = Map<String, DateTime>.from(state.activeErrorStartTimes);
-    updatedStartTimes[errorDevice.id] = DateTime.now();
-
-    state = state.copyWith(
-      devices: updatedDevices,
-      activeErrorStartTimes: updatedStartTimes,
-      lastErrorTime: DateTime.now(),
-    );
-
-    _soundService.playErrorSound();
-    debugPrint('⚡ Error generated on ${errorDevice.id} (pulse)');
-  }
-
   // Auto-recover any active errors that exceeded the grace period.
   Future<void> _autoRecoverExpiredErrors() async {
-    if (state.activeErrorStartTimes.isEmpty) return;
+    if (state.activeErrors.isEmpty) return;
 
     final now = DateTime.now();
     final expired = <String>[];
 
-    state.activeErrorStartTimes.forEach((deviceId, startTime) {
-      final elapsed = now.difference(startTime).inSeconds;
+    state.activeErrors.forEach((deviceId, error) {
+      final elapsed = now.difference(error.startTime).inSeconds;
       if (elapsed >= _errorGracePeriodSeconds) expired.add(deviceId);
     });
 
     if (expired.isEmpty) return;
 
     final updatedDevices = List<Device>.from(state.devices);
-    final updatedStartTimes = Map<String, DateTime>.from(state.activeErrorStartTimes);
+    final updatedErrors = Map<String, DeviceError>.from(state.activeErrors);
     var scoreDelta = 0;
 
     for (final deviceId in expired) {
@@ -451,36 +541,42 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
       );
 
       // Remove from active errors
-      updatedStartTimes.remove(deviceId);
+      updatedErrors.remove(deviceId);
 
       // Apply penalty
       scoreDelta -= _autoRecoveryPenalty;
 
       _soundService.playErrorSound();
-      debugPrint('Auto-recovered $deviceId after grace period; penalty ${_autoRecoveryPenalty}');
+      debugPrint('Auto-recovered $deviceId after grace period; penalty $_autoRecoveryPenalty');
     }
+
+    // Remove from recent errors
+    final updatedRecentErrors = List<String>.from(state.recentErrors)
+      ..removeWhere((id) => expired.contains(id));
 
     // Update state with recovered devices and deducted score (clamp at 0)
     final newScore = (state.score + scoreDelta).clamp(0, double.infinity).toInt();
     state = state.copyWith(
       devices: updatedDevices,
-      activeErrorStartTimes: updatedStartTimes,
+      activeErrors: updatedErrors,
       score: newScore,
-      recentAutoRecoveredDevices: expired,
+      recentAutoRecoveredDevices: [...state.recentAutoRecoveredDevices, ...expired],
+      recentErrors: updatedRecentErrors,
     );
 
     // Log auto-recovery events
+    final player = await _fetchPlayerName();
     for (final deviceId in expired) {
       final deviceIndex = updatedDevices.indexWhere((d) => d.id == deviceId);
       if (deviceIndex != -1) {
-     _logsNotifier.addGameplayLog(
-  device: deviceId,
-  deviceType: updatedDevices[deviceIndex].type,
-  eventType: "AUTO_RECOVERY",
-  message: "Device auto-recovered (Penalty: -$_autoRecoveryPenalty)",
-  status: "warning",
-  playerName: await _fetchPlayerName(),
-);
+        _logsNotifier.addGameplayLog(
+          device: deviceId,
+          deviceType: updatedDevices[deviceIndex].type,
+          eventType: "AUTO_RECOVERY",
+          message: "Device auto-recovered (Penalty: -$_autoRecoveryPenalty)",
+          status: "warning",
+          playerName: player,
+        );
       }
     }
   }
@@ -497,9 +593,8 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
   }
 
   // ===============================
-  // 🔄 Reset Simulation
+  // Reset Simulation
   // ===============================
-
   void resetSimulation({bool restart = false}) {
     _gameTimer?.cancel();
     _errorTimer?.cancel();
@@ -512,12 +607,12 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     if (restart && state.currentScenario != null) {
       final scenario = state.currentScenario!;
       state = const SimulationState(); // clear first
-      debugPrint('🔄 Simulation reset — restarting scenario "${scenario.name}"');
+      debugPrint('Simulation reset — restarting scenario "${scenario.name}"');
       startSimulation(scenario);
     } else {
       // Fully clear simulation (used when exiting the game)
       state = const SimulationState();
-      debugPrint('🧹 Simulation completely stopped and cleared');
+      debugPrint('Simulation completely stopped and cleared');
     }
   }
 
@@ -529,8 +624,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     _soundService.stopBackgroundMusic();
     _gameTimer = null;
     _errorTimer = null;
-    debugPrint('🛑 SimulationNotifier disposed — timers and sounds cleared');
+    debugPrint('SimulationNotifier disposed — timers and sounds cleared');
     super.dispose();
   }
-
 }

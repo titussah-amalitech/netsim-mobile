@@ -2,11 +2,9 @@
 
 import 'dart:async';
 import 'dart:math' as math;
-// Use dart:math via alias `math` for trig and Point
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:netsim_mobile/features/devices/data/models/device_model.dart';
-import 'package:netsim_mobile/features/devices/data/models/device_position.dart';
 
 class NetworkCanvas extends StatefulWidget {
   final List<Device> devices;
@@ -68,22 +66,7 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
       ),
        child: LayoutBuilder(
          builder: (context, constraints) {
-           final centerX = constraints.maxWidth / 2;
-           final centerY = constraints.maxHeight / 2;
-           final radius = math.min(constraints.maxWidth, constraints.maxHeight) * 0.3;
-           
-           // Calculate positions for all devices
-           for (var i = 0; i < widget.devices.length; i++) {
-             final angle = (2 * math.pi * i) / widget.devices.length;
-             final x = centerX + radius * math.cos(angle);
-             final y = centerY + radius * math.sin(angle);
-            // Replace the device in the list with a copy that has the new position
-            widget.devices[i] = widget.devices[i].copyWith(
-              position: Position(x: x.round(), y: y.round()),
-            );
-           }
-           
-          return IgnorePointer(
+           return IgnorePointer(
   ignoring: widget.isPaused, // 👈 disable interaction when paused
   child: Stack(
     children: [
@@ -354,7 +337,10 @@ class NetworkConnectionsPainter extends CustomPainter {
     double phase = 0.0;
     try {
       if (animation is Animation<double>) {
-        phase = (animation as Animation<double>).value * 18.0; // 10+8 dash length
+        final animValue = (animation as Animation<double>).value;
+        // Normal connections move 3x faster than error connections
+        final baseSpeed = 18.0; // Base unit (dash+gap length)
+        phase = animValue * baseSpeed * 3.0; // Faster for normal state
       }
     } catch (_) {
       phase = 0.0;
@@ -379,25 +365,31 @@ class NetworkConnectionsPainter extends CustomPainter {
           !deviceA.status.online ||
           !deviceB.status.online;
 
+      // Calculate pulse effect for error connections
+      final errorPulse = isOffline
+          ? 0.6 + (0.3 * math.sin((animation as Animation<double>).value * math.pi * 2))
+          : 0.7;
+
+      // THICKER CONNECTION LINES - increased from 2.5 to 4.0
       final paint = Paint()
-        ..strokeWidth = 2
+        ..strokeWidth = 4.0 // Increased from 2.5 to 4.0
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..isAntiAlias = true
         ..color = isOffline
-            ? Colors.red.withOpacity(0.9)
+            ? Colors.red.withOpacity(errorPulse)
             : Colors.lightBlue.withOpacity(0.7);
 
-      final path = Path()
-        ..moveTo(start.dx, start.dy)
-        ..lineTo(end.dx, end.dy);
-
+      // Use different speeds based on connection state
       if (isOffline) {
-        // Draw solid red line for offline connections
-        canvas.drawPath(path, paint);
+        // SLOW animation for error connections
+        final slowPhase = (animation as Animation<double>).value * 6.0; // Much slower
+        _drawDashedLineFallback(canvas, start, end, paint, 
+            dash: 12, gap: 8, phase: slowPhase);
       } else {
-        // Draw animated dashed line (fallback manual implementation)
-        _drawDashedLineFallback(canvas, start, end, paint, dash: 10, gap: 8, phase: phase);
+        // FAST animation for normal connections
+        _drawDashedLineFallback(canvas, start, end, paint, 
+            dash: 16, gap: 6, phase: phase);
       }
     }
   }
@@ -406,11 +398,11 @@ class NetworkConnectionsPainter extends CustomPainter {
       {double dash = 10, double gap = 8, double phase = 0}) {
     final dx = b.dx - a.dx;
     final dy = b.dy - a.dy;
-  final dist = math.sqrt(dx * dx + dy * dy);
+    final dist = math.sqrt(dx * dx + dy * dy);
     if (dist == 0) return;
     final ux = dx / dist;
     final uy = dy / dist;
-
+    
     double offset = -phase % (dash + gap);
     while (offset < dist) {
       final start = offset.clamp(0, dist);

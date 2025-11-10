@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:netsim_mobile/features/scenarios/data/models/scenario_model.dart';
 import 'package:netsim_mobile/features/simulation/logic/simulation_provider.dart';
 import 'package:netsim_mobile/features/simulation/data/models/simulation_state.dart';
+import 'package:netsim_mobile/features/simulation/data/models/device_error.dart';
+import 'package:netsim_mobile/features/devices/data/models/device_model.dart';
 import 'package:netsim_mobile/features/simulation/presentation/widgets/network_canvas.dart';
 import 'package:netsim_mobile/features/simulation/presentation/widgets/game_over_dialog.dart';
 import 'package:netsim_mobile/features/simulation/presentation/widgets/fix_device_dialog.dart';
@@ -399,32 +401,34 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
     }
 
     return Container(
-      width: MediaQuery.of(context).size.width * 0.95,
+      width: MediaQuery.of(context).size.width * 0.98,
       height: MediaQuery.of(context).size.height * 0.80,
       padding: const EdgeInsets.all(6),
       child: NetworkCanvas(
         showLabels: true,
         devices: simulationState.devices,
         connections: simulationState.connections,
-        activeErrorDeviceIds: simulationState.activeErrorStartTimes.keys
-            .toSet(),
+        activeErrorDeviceIds: simulationState.activeErrors.keys.toSet(),
         controllers: _deviceControllers,
         onDeviceTap: (deviceId) {
-          if (simulationState.activeErrorStartTimes.containsKey(deviceId)) {
+          if (simulationState.activeErrors.containsKey(deviceId)) {
+            final DeviceError error = simulationState.activeErrors[deviceId]!;
+            final Device device = simulationState.devices.firstWhere((d) => d.id == deviceId);
             showDialog<void>(
               context: context,
               barrierDismissible: false,
               builder: (context) => FixDeviceDialog(
-                deviceId: deviceId,
-                onConfirm: (id, latency) async {
+                error: error,
+                currentParameters: device.parameters,
+                onFix: (error, fixData) async {
                   final messenger = ScaffoldMessenger.of(context);
                   final result = await ref
                       .read(simulationProvider.notifier)
-                      .fixDeviceWithLatency(id, latency);
+                      .fixDevice(error.deviceId, fixData);
 
-                  if (!mounted) return;
+                  if (!mounted) return (false, 0);
 
-                  final controller = _deviceControllers[id];
+                  final controller = _deviceControllers[error.deviceId];
 
                   if (result.$1) {
                     messenger.showSnackBar(
@@ -443,6 +447,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                     );
                     controller?.playFailure();
                   }
+                  return result;
                 },
               ),
             );
