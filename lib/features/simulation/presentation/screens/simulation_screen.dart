@@ -123,10 +123,19 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
           showDialog(
             context: context,
             barrierDismissible: false,
-            builder: (context) => GameOverDialog(
-              scenario: widget.scenario,
-              score: simulationState.score,
-            ),
+            builder: (context) {
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  dialogTheme: DialogThemeData(
+                    backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ), // << your color here
+                ),
+                child: GameOverDialog(
+                  scenario: widget.scenario,
+                  score: simulationState.score,
+                ),
+              );
+            },
           );
         }
       });
@@ -184,31 +193,42 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                   // Show confirmation dialog
                   final shouldExit = await showDialog<bool>(
                     context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Exit Simulation?'),
-                      content: const Text(
-                        'Are you sure you want to exit the simulation? '
-                        'Your current progress will be lost.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () =>
-                              Navigator.pop(context, false), // Cancel
-                          child: const Text('Cancel'),
+                    builder: (context) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          dialogTheme: DialogThemeData(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
+                          ), // << your color here
                         ),
-                        ElevatedButton(
-                          onPressed: () =>
-                              Navigator.pop(context, true), // Confirm
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                        child: AlertDialog(
+                          title: const Text('Exit Simulation?'),
+                          content: const Text(
+                            'Are you sure you want to exit the simulation? '
+                            'Your current progress will be lost.',
                           ),
-                          child: const Text(
-                            'Exit',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.pop(context, false), // Cancel
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  Navigator.pop(context, true), // Confirm
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              child: const Text(
+                                'Exit',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   );
 
                   // Handle user decision
@@ -278,40 +298,52 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                       final shouldRestart = await showDialog<bool>(
                         context: context,
                         barrierDismissible: false,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Restart Simulation'),
-                          content: const Text(
-                            'Are you sure you want to restart the simulation? All progress and score will be lost.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                ref
-                                    .read(simulationProvider.notifier)
-                                    .resetSimulation();
-                                Navigator.pop(context);
-                                Navigator.pushReplacement(
+                        builder: (context) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              dialogTheme: DialogThemeData(
+                                backgroundColor: Theme.of(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (context) => SimulationScreen(
-                                      scenario: widget.scenario,
-                                    ),
-                                  ),
-                                );
-                              },
-
-                              //  () => Navigator.pop(context, true),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                              ),
-                              child: const Text('Restart'),
+                                ).colorScheme.onPrimary,
+                              ), // << your color here
                             ),
-                          ],
-                        ),
+                            child: AlertDialog(
+                              title: const Text('Restart Simulation'),
+                              content: const Text(
+                                'Are you sure you want to restart the simulation? All progress and score will be lost.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    ref
+                                        .read(simulationProvider.notifier)
+                                        .resetSimulation();
+                                    Navigator.pop(context);
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => SimulationScreen(
+                                          scenario: widget.scenario,
+                                        ),
+                                      ),
+                                    );
+                                  },
+
+                                  //  () => Navigator.pop(context, true),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                  child: const Text('Restart'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       );
 
                       // If user confirmed restart
@@ -431,11 +463,20 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
         onDeviceTap: (deviceId) {
           if (simulationState.activeErrors.containsKey(deviceId)) {
             final DeviceError error = simulationState.activeErrors[deviceId]!;
-            final Device device = simulationState.devices.firstWhere((d) => d.id == deviceId);
+            final Device device = simulationState.devices.firstWhere(
+              (d) => d.id == deviceId,
+            );
             showDialog<void>(
               context: context,
               barrierDismissible: false,
-              builder: (context) => FixDeviceDialog(
+              builder: (context) {
+                 return Theme(
+                data: Theme.of(context).copyWith(
+                  dialogTheme: DialogThemeData(
+                    backgroundColor: Theme.of(context).colorScheme.onPrimary,
+                  ), // << your color here
+                ),
+                child:   FixDeviceDialog(
                 error: error,
                 currentParameters: device.parameters,
                 onFix: (error, fixData) async {
@@ -468,6 +509,13 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                   return result;
                 },
               ),
+            
+              );
+              }
+              
+              
+              
+           
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -324,6 +324,7 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
       builder: (_) => StatefulBuilder(
         builder: (context, setStateDialog) {
           return AlertDialog(
+            backgroundColor:  Theme.of(context).colorScheme.onPrimary,
             title: Text('Edit ${device.type} Parameters'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -452,19 +453,21 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
       decoration: BoxDecoration(
-        color: highlighted ? Colors.blueAccent : Colors.grey.shade200,
+        color: highlighted 
+          ? Theme.of(context).colorScheme.primary 
+          : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
         boxShadow: highlighted
             ? [
                 BoxShadow(
-                  color: Colors.blueAccent.withOpacity(0.4),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
                   blurRadius: 6,
                 )
               ]
             : [],
         border: highlighted
-            ? Border.all(color: Colors.blueAccent, width: 2)
-            : null,
+            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+            : Border.all(color: Theme.of(context).dividerColor, width: 1),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -472,13 +475,17 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
           Icon(
             getDeviceIcon(type),
             size: 20,
-            color: highlighted ? Colors.white : Colors.black87,
+            color: highlighted 
+              ? Theme.of(context).colorScheme.onPrimary 
+              : Theme.of(context).colorScheme.onSurface,
           ),
           const SizedBox(width: 4),
           Text(
             type,
             style: TextStyle(
-              color: highlighted ? Colors.white : Colors.black87,
+              color: highlighted 
+                ? Theme.of(context).colorScheme.onPrimary 
+                : Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -494,8 +501,8 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
       appBar: AppBar(
         elevation: 5,
         title: const Text('Scenario Editor'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         actions: [
           IconButton(
             icon: const Icon(Icons.undo),
@@ -524,8 +531,7 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
           // CANVAS AREA - Takes most of the space
           Expanded(
             child: Container(
-              // margin: EdgeInsets.all(8),
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.background,
               child: DragTarget<String>(
                 onAcceptWithDetails: (details) {
                   final pos = _globalToLocal(details.offset);
@@ -540,7 +546,7 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
                         // Grid background
                         Positioned.fill(
                           child: CustomPaint(
-                            painter: _GridPainter(),
+                            painter: _GridPainter(context),
                           ),
                         ),
 
@@ -593,13 +599,13 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
             height: 120,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: Theme.of(context).colorScheme.surface,
               border: Border(
-                top: BorderSide(color: Colors.grey.shade300),
+                top: BorderSide(color: Theme.of(context).dividerColor),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black12,
+                  color: Theme.of(context).shadowColor.withOpacity(0.1),
                   blurRadius: 4,
                   offset: Offset(0, -2),
                 ),
@@ -608,12 +614,12 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   "DRAG DEVICES TO CANVAS",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: Theme.of(context).colorScheme.secondary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -653,10 +659,15 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
 // GRID PAINTER (SUBTLE)
 // -------------------------------------------------------
 class _GridPainter extends CustomPainter {
+  final Color gridColor;
+
+  _GridPainter(BuildContext context)
+      : gridColor = Theme.of(context).dividerColor;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey.shade300.withOpacity(0.3)
+      ..color = gridColor.withOpacity(0.3)
       ..strokeWidth = 0.6;
 
     const grid = 30.0;
@@ -671,7 +682,8 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _GridPainter oldDelegate) =>
+      oldDelegate.gridColor != gridColor;
 }
 
 // -------------------------------------------------------
@@ -686,7 +698,7 @@ class _ConnectionPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.green.shade600
+      ..color = Colors.green.shade600  // Keep this color as it represents connection status
       ..strokeWidth = 2.2
       ..style = PaintingStyle.stroke;
 

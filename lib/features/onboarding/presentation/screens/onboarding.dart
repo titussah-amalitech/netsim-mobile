@@ -41,9 +41,13 @@ class _OnboardingState extends State<Onboarding> {
           child: ShadCard(
             title: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Center(child: Text("Welcome, ${_userName.isNotEmpty ? _userName : 'Player'}")),
+              child: Center(
+                child: Text(
+                  "Welcome, ${_userName.isNotEmpty ? _userName : 'Player'}",
+                ),
+              ),
             ),
-           
+
             child: Column(
               spacing: 15,
               mainAxisSize: MainAxisSize.min,
@@ -61,59 +65,60 @@ class _OnboardingState extends State<Onboarding> {
                   onPressed: () => Navigator.pushNamed(context, "/leaderboard"),
                 ),
                 // Only show this button if user is admin
-                if (_isAdmin)
+                if (_isAdmin) ...[
                   ShadButton(
                     width: double.infinity,
                     leading: const Icon(Icons.edit),
                     child: const Text("Edit Scenarios"),
                     onPressed: () => Navigator.pushNamed(context, "/scenario"),
                   ),
-               
+
                   ShadButton(
                     width: double.infinity,
-                    leading: const Icon(Icons.edit),
-                    child: const Text("Create Scenarios"),
-                    onPressed: () => Navigator.pushNamed(context, "/createScenario"),
+                    leading: const Icon(Icons.add_circle_outline),
+                    child: const Text("Create Scenario"),
+                    onPressed: () =>
+                        Navigator.pushNamed(context, "/createScenario"),
                   ),
-               
+                ],
+
                 ShadButton(
                   width: double.infinity,
                   leading: const Icon(Icons.exit_to_app),
                   child: const Text("Exit"),
                   onPressed: () async {
-                  // Show confirmation dialog
-                  final shouldExit = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Exit Game?'),
-                      content: const Text(
-                        'Are you sure you want to exit the simulation? '
-                        
+                    // Show confirmation dialog
+                    final shouldExit = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Exit Game?'),
+                        content: const Text(
+                          'Are you sure you want to exit the simulation? ',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(context, false), // Cancel
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () =>
+                                Navigator.pop(context, true), // Confirm
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            child: const Text(
+                              'Exit',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () =>
-                              Navigator.pop(context, false), // Cancel
-                          child: const Text('Cancel'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () =>
-                              Navigator.pop(context, true), // Confirm
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                          ),
-                          child: const Text(
-                            'Exit',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (shouldExit == true) {
-                    Navigator.pushNamed(context, '/'); // Exit the app
-                  }
-                },
+                    );
+                    if (shouldExit == true) {
+                      Navigator.pushNamed(context, '/'); // Exit the app
+                    }
+                  },
                 ),
               ],
             ),
