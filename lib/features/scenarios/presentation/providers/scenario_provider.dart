@@ -38,6 +38,19 @@ class ScenarioNotifier extends Notifier<AsyncValue<List<Scenario>>> {
     await dataSource.updateScenario(scenario);
     await loadScenarios();
   }
+
+  Future<void> deleteScenario(String scenarioName) async {
+    final dataSource = ref.read(scenarioDataSourceProvider);
+    final success = await dataSource.deleteScenario(scenarioName);
+    if (success) {
+      // Also update the in-memory state immediately
+      final current = state.value ?? [];
+      final updated = current.where((s) => s.name != scenarioName).toList();
+      state = AsyncValue.data(updated);
+    }
+    // Reload to ensure we're in sync with disk
+    await loadScenarios();
+  }
 }
 
 final scenarioNotifierProvider =

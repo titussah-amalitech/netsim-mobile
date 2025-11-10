@@ -11,6 +11,11 @@ import 'scenario_view.dart';
 class ScenarioListScreen extends ConsumerWidget {
   const ScenarioListScreen({super.key});
 
+  // List of built-in scenario names that should not be deletable
+  static const _builtInScenarios = {'Basic Networking', 'Advanced Routing'};
+  
+  bool isBuiltInScenario(String name) => _builtInScenarios.contains(name);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scenariosAsync = ref.watch(scenarioNotifierProvider);
@@ -42,7 +47,56 @@ class ScenarioListScreen extends ConsumerWidget {
                 },
                 child: ShadCard(
                   width: double.infinity,
-                  title: Text(scenario.name, style: theme.textTheme.h4),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(scenario.name, style: theme.textTheme.h4),
+                      ),
+                      // Show delete button for non-built-in scenarios
+                      if (!isBuiltInScenario(scenario.name))
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.red, size: 24,),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Scenario'),
+                                content: Text(
+                                  'Are you sure you want to delete "${scenario.name}"? This cannot be undone.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            
+                            if (confirm == true) {
+                              await ref
+                                  .read(scenarioNotifierProvider.notifier)
+                                  .deleteScenario(scenario.name);
+                              
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Deleted scenario "${scenario.name}"'),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                    ],
+                  ),
                   description: Text(
                     scenario.metadata.description,
                     style: theme.textTheme.muted,

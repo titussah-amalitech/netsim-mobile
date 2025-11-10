@@ -150,44 +150,114 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
     return box?.globalToLocal(global) ?? Offset.zero;
   }
 
+  bool _validateConnections() {
+    if (_devices.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add at least one device to create a scenario')),
+      );
+      return false;
+    }
+
+    // Create a map of device IDs to their connections
+    final Map<String, Set<String>> deviceConnections = {};
+    for (final device in _devices) {
+      deviceConnections[device.id] = {};
+    }
+
+    // Fill in connections
+    for (final conn in _connections) {
+      deviceConnections[conn[0]]?.add(conn[1]);
+      deviceConnections[conn[1]]?.add(conn[0]);
+    }
+
+    // Check if any device is isolated (not connected to any other device)
+    final isolated = _devices.where((d) => 
+      deviceConnections[d.id]?.isEmpty ?? true
+    ).toList();
+
+    if (isolated.isNotEmpty) {
+      final deviceList = isolated.map((d) => d.type).join(', ');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Connect all devices before saving. Unconnected: $deviceList')),
+      );
+      return false;
+    }
+
+    return true;
+  }
+
   Future<void> _saveScenario() async {
+    // Validate connections first
+    if (!_validateConnections()) return;
+
     final nameController = TextEditingController();
     final difficultyController = TextEditingController(text: 'Medium');
     final timeController = TextEditingController(text: '300');
+    final descriptionController = TextEditingController();
 
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text("Save Scenario"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Name'),
+      builder: (_) => StatefulBuilder(
+        builder: (context, setState) {
+          bool hasNameError = nameController.text.trim().isEmpty;
+          bool hasDifficultyError = difficultyController.text.trim().isEmpty;
+          bool hasTimeError = int.tryParse(timeController.text.trim())?.isNegative ?? true;
+          bool hasDescriptionError = descriptionController.text.trim().isEmpty;
+          bool hasError = hasNameError || hasDifficultyError || hasTimeError || hasDescriptionError;
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            title: const Text("Save Scenario"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    errorText: hasNameError ? 'Name is required' : null,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                TextField(
+                  controller: difficultyController,
+                  decoration: InputDecoration(
+                    labelText: 'Difficulty',
+                    errorText: hasDifficultyError ? 'Difficulty is required' : null,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                TextField(
+                  controller: timeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Time Limit (s)',
+                    errorText: hasTimeError ? 'Enter a valid time limit (> 0)' : null,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                TextField(
+                  controller: descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    errorText: hasDescriptionError ? 'Description is required' : null,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ],
             ),
-            TextField(
-              controller: difficultyController,
-              decoration: const InputDecoration(labelText: 'Difficulty'),
-            ),
-            TextField(
-              controller: timeController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Time Limit (s)'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Save"),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: hasError ? null : () => Navigator.pop(context, true),
+                child: const Text("Save"),
+              ),
+            ],
+          );
+        },
       ),
     );
 
@@ -202,7 +272,7 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
       metadata: Metadata(
         createdBy: 'admin',
         createdAt: DateTime.now(),
-        description: 'Created in editor',
+        description: descriptionController.text.trim(),
       ),
     );
     try {
@@ -218,14 +288,15 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Scenario "${scenario.name}" saved'),
-            action: SnackBarAction(
-              label: 'View Scenarios',
-              onPressed: () {
-                Navigator.pop(context); // Return to scenario list
-              },
-            ),
           ),
         );
+        // Clear the canvas
+        setState(() {
+          _devices = [];
+          _connections = [];
+          _selectedDeviceId = null;
+          _pushHistory(); // Add the empty state to history
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -399,7 +470,7 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
         children: [
           Icon(
             getDeviceIcon(type),
-            size: 16,
+            size: 20,
             color: highlighted ? Colors.white : Colors.black87,
           ),
           const SizedBox(width: 4),
@@ -420,8 +491,9 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        elevation: 5,
         title: const Text('Scenario Editor'),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -430,12 +502,12 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
             onPressed: _historyIndex > 0 ? _undo : null,
           ),
           IconButton(
-            icon: const Icon(Icons.redo),
+            icon: const Icon(Icons.redo, ),
             tooltip: 'Redo',
             onPressed: _historyIndex < _history.length - 1 ? _redo : null,
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete,),
             tooltip: 'Delete selected device',
             onPressed: _selectedDeviceId != null ? _deleteSelectedDevice : null,
           ),
@@ -488,8 +560,8 @@ class _ScenarioEditorScreenState extends ConsumerState<ScenarioEditorScreen> {
                             top: pos.y.toDouble(),
                               child: GestureDetector(
                                 // Tap to edit parameters, long-press to select/connect
-                                onTap: () => _editDeviceParameters(d),
-                                onLongPress: () {
+                                onDoubleTap: () => _editDeviceParameters(d),
+                                onTap: () {
                                   if (_selectedDeviceId == null) {
                                     setState(() => _selectedDeviceId = d.id);
                                   } else if (_selectedDeviceId == d.id) {
