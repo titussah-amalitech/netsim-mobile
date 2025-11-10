@@ -42,7 +42,25 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
       // Show error alerts
       if (next.recentErrors.isNotEmpty) {
         final deviceId = next.recentErrors.first;
-        final message = 'Error detected on device $deviceId!';
+        final error = next.activeErrors[deviceId];
+
+        String message;
+        Color bgColor;
+        IconData icon;
+
+        if (error != null && error.type == DeviceErrorType.offline) {
+          message = 'Device $deviceId is offline';
+          bgColor = Colors.red;
+          icon = Icons.signal_wifi_off;
+        } else if (error != null) {
+          message = 'Warning: ${error.type.displayName}';
+          bgColor = Colors.amber.shade700;
+          icon = Icons.warning_amber_rounded;
+        } else {
+          message = 'Error detected on device $deviceId!';
+          bgColor = Colors.red;
+          icon = Icons.error_outline;
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -50,7 +68,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.white),
+                  Icon(icon, color: Colors.white),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -66,7 +84,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
                 ],
               ),
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: bgColor,
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

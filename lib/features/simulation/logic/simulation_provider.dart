@@ -181,7 +181,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     state = SimulationState(
       currentScenario: scenario,
       devices: positionedDevices,
-      connections: scenario.connections ?? [],
+  connections: scenario.connections,
       remainingTime: scenario.timeLimit,
       isRunning: true,
     );
@@ -204,7 +204,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     );
 
     _errorTimer = Timer.periodic(
-      const Duration(seconds: 30),
+      const Duration(seconds: 10),
       (_) => _generateRandomError(),
     );
   }
@@ -230,7 +230,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     if (!state.isRunning) return;
 
     if (state.lastErrorTime != null &&
-        DateTime.now().difference(state.lastErrorTime!).inSeconds < 30) {
+        DateTime.now().difference(state.lastErrorTime!).inSeconds < 10) {
       return;
     }
 
@@ -258,9 +258,11 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     );
 
     final updatedDevices = List<Device>.from(devices);
+    // Only mark device offline when the error type is offline. Other errors
+    // should be treated as warnings (device remains online but flagged).
     updatedDevices[deviceIndex] = errorDevice.copyWith(
       status: Status(
-        online: false,
+        online: errorType == DeviceErrorType.offline ? false : true,
         latency: errorDevice.status.latency,
         lastChecked: DateTime.now(),
       ),
@@ -276,14 +278,19 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
       recentErrors: [...state.recentErrors, errorDevice.id],
     );
 
-    // Log the error event
+    // Log the error event. Use different messages/status for warnings vs offline
     final player = await _fetchPlayerName();
+    final logMessage = errorType == DeviceErrorType.offline
+        ? "Device ${errorDevice.id} is offline"
+        : "Warning: ${errorType.displayName}";
+    final logStatus = errorType == DeviceErrorType.offline ? 'offline' : 'warning';
+
     _logsNotifier.addGameplayLog(
       device: errorDevice.id,
       deviceType: errorDevice.type,
-      eventType: "ERROR",
-      message: "Device ${errorType.name} error occurred",
-      status: "offline",
+      eventType: errorType == DeviceErrorType.offline ? "ERROR" : "WARNING",
+      message: logMessage,
+      status: logStatus,
       playerName: player,
     );
 

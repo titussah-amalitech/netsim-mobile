@@ -85,8 +85,7 @@ class _NetworkCanvasState extends State<NetworkCanvas> with SingleTickerProvider
         return DeviceWidget(
           key: ValueKey('${device.id}-$idx'),
           device: device,
-          hasError: widget.activeErrorDeviceIds.contains(device.id) &&
-              !device.status.online,
+          hasError: widget.activeErrorDeviceIds.contains(device.id),
           onTap: () => widget.onDeviceTap?.call(device.id),
           controller: widget.controllers != null
               ? widget.controllers![device.id]
@@ -222,6 +221,8 @@ class _DeviceWidgetState extends State<DeviceWidget>
     }
 
     final glowVal = _glowController?.value ?? 0.0;
+  final isWarning = isError && isOnline;
+  final isOffline = !isOnline;
 
     return Positioned(
       left: widget.device.position.x.toDouble() - half,
@@ -235,25 +236,30 @@ class _DeviceWidgetState extends State<DeviceWidget>
             width: deviceVisualSize,
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: isError
-                  ? Theme.of(context).colorScheme.errorContainer
-                  : Theme.of(context).colorScheme.surface,
+              color: isOffline
+                  ? Colors.red.shade50
+                  : (isWarning ? Colors.amber.shade50 : Theme.of(context).colorScheme.surface),
               border: Border.all(
-                color: isError
+                color: isOffline
                     ? (_isBlinkingVisible
                         ? Theme.of(context).colorScheme.error
                         : Colors.transparent)
-                    : (isOnline ? Colors.green : Colors.grey),
+                    : (isWarning
+                        ? (_isBlinkingVisible ? Colors.amber.shade700 : Colors.transparent)
+                        : (isOnline ? Colors.green : Colors.grey)),
                 width: 2.5,
               ),
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
-                if (isError)
+                if (isOffline)
                   BoxShadow(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .error
-                        .withOpacity(0.4),
+                    color: Theme.of(context).colorScheme.error.withOpacity(0.4),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  )
+                else if (isWarning)
+                  BoxShadow(
+                    color: Colors.amber.withOpacity(0.35),
                     blurRadius: 8,
                     spreadRadius: 2,
                   )
@@ -277,9 +283,9 @@ class _DeviceWidgetState extends State<DeviceWidget>
                 Icon(
                   _getDeviceIcon(widget.device.type),
                   size: 24,
-                  color: isError
+                  color: isOffline
                       ? Theme.of(context).colorScheme.onErrorContainer
-                      : Theme.of(context).colorScheme.onSurface,
+                      : (isWarning ? Colors.amber.shade900 : Theme.of(context).colorScheme.onSurface),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -287,9 +293,9 @@ class _DeviceWidgetState extends State<DeviceWidget>
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isError
-                        ? Theme.of(context).colorScheme.error
-                        : Theme.of(context).colorScheme.onSurface,
+          color: isOffline
+            ? Theme.of(context).colorScheme.error
+            : (isWarning ? Colors.amber.shade800 : Theme.of(context).colorScheme.onSurface),
                   ),
                 ),
               ],
@@ -360,10 +366,9 @@ class NetworkConnectionsPainter extends CustomPainter {
         deviceB.position.y.toDouble(),
       );
 
-      final isOffline = offlineDeviceIds.contains(deviceA.id) ||
-          offlineDeviceIds.contains(deviceB.id) ||
-          !deviceA.status.online ||
-          !deviceB.status.online;
+    final hasActiveError = offlineDeviceIds.contains(deviceA.id) ||
+      offlineDeviceIds.contains(deviceB.id);
+    final isOffline = !deviceA.status.online || !deviceB.status.online;
 
       // Calculate pulse effect for error connections
       final errorPulse = isOffline
@@ -376,20 +381,22 @@ class NetworkConnectionsPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
         ..isAntiAlias = true
-        ..color = isOffline
-            ? Colors.red.withOpacity(errorPulse)
-            : Colors.lightBlue.withOpacity(0.7);
+    ..color = isOffline
+      ? Colors.red.withOpacity(errorPulse)
+      : (hasActiveError ? Colors.amber.withOpacity(0.9) : Colors.lightBlue.withOpacity(0.7));
 
       // Use different speeds based on connection state
       if (isOffline) {
-        // SLOW animation for error connections
+        // SLOW animation for offline connections
         final slowPhase = (animation as Animation<double>).value * 6.0; // Much slower
-        _drawDashedLineFallback(canvas, start, end, paint, 
-            dash: 12, gap: 8, phase: slowPhase);
+        _drawDashedLineFallback(canvas, start, end, paint, dash: 12, gap: 8, phase: slowPhase);
+      } else if (hasActiveError) {
+        // Slightly slower/pulsing animation for warning connections
+        final warnPhase = (animation as Animation<double>).value * 4.0;
+        _drawDashedLineFallback(canvas, start, end, paint, dash: 14, gap: 6, phase: warnPhase);
       } else {
         // FAST animation for normal connections
-        _drawDashedLineFallback(canvas, start, end, paint, 
-            dash: 16, gap: 6, phase: phase);
+        _drawDashedLineFallback(canvas, start, end, paint, dash: 16, gap: 6, phase: phase);
       }
     }
   }
