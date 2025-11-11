@@ -46,7 +46,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     this._logsNotifier,
   ) : super(const SimulationState()) {
     // Start background music when the notifier is created
-    _soundService.startBackgroundMusic();
+    // _soundService.startBackgroundMusic();
     // Cache the player name on initialization
     _initializePlayerName();
   }
@@ -431,7 +431,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
         recentAutoRecoveredDevices: expiredDevices,
       );
 
-      _soundService.stopBackgroundMusic();
+      // _soundService.stopBackgroundMusic();
 
       // Log auto-recoveries
       if (expiredDevices.isNotEmpty) {
@@ -608,7 +608,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     _errorTimer = null;
   
 
-    _soundService.stopBackgroundMusic();
+    // _soundService.stopBackgroundMusic();
 
     // When restarting, start fresh from the same scenario
     if (restart && state.currentScenario != null) {
@@ -628,7 +628,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     // Ensure timers and music are stopped when provider is disposed
     _gameTimer?.cancel();
     _errorTimer?.cancel();
-    _soundService.stopBackgroundMusic();
+    // _soundService.stopBackgroundMusic();
     _gameTimer = null;
     _errorTimer = null;
     debugPrint('SimulationNotifier disposed — timers and sounds cleared');
