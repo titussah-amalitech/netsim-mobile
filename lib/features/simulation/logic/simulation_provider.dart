@@ -99,18 +99,17 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
         final ping = fixData['pingInterval'] as int?;
         final latency = fixData['latencyThreshold'] as int?;
         final overload = fixData['overload'] as int?;
-        final traffic = fixData['trafficLoad'] as int?;
         
-        if (ping == null || latency == null || overload == null || traffic == null) {
+        if (ping == null || latency == null || overload == null) {
           return false;
         }
         
         final bool pingOK = ping >= 40 && ping <= 80;
         final bool latencyOK = latency >= 60 && latency <= 120;
         final bool overloadOK = overload >= 10 && overload <= 60;
-        final bool trafficOK = traffic >= 20 && traffic <= 70;
+       
         
-        return pingOK && latencyOK && overloadOK && trafficOK;
+        return pingOK && latencyOK && overloadOK;
 
       case DeviceErrorType.routingError:
         final selectedRoute = fixData['selectedRoute'] as String;
@@ -139,7 +138,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
           'pingInterval': device.parameters.pingInterval,
           'latencyThreshold': device.parameters.latencyThreshold,
           'overload': device.parameters.trafficLoad, // Using trafficLoad as overload
-          'trafficLoad': device.parameters.trafficLoad,
+          
         };
       
       case DeviceErrorType.routingError:
@@ -347,10 +346,10 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
         final ping = fixData['pingInterval'] as int;
         final latency = fixData['latencyThreshold'] as int;
         final overload = fixData['overload'] as int;
-        final traffic = fixData['trafficLoad'] as int;
+       
 
         basePoints = (150 - (durationSeconds * 6)).clamp(50, 150);
-        fixMessage = "Device restored: ping=$ping, latency=$latency, overload=$overload, traffic=$traffic";
+        fixMessage = "Device restored: ping=$ping, latency=$latency, overload=$overload";
         break;
 
       case DeviceErrorType.routingError:
@@ -607,6 +606,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     _errorTimer?.cancel();
     _gameTimer = null;
     _errorTimer = null;
+  
 
     _soundService.stopBackgroundMusic();
 

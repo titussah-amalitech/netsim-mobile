@@ -99,7 +99,7 @@ class ErrorGenerator {
           'pingInterval': device.parameters.pingInterval,
           'latencyThreshold': device.parameters.latencyThreshold,
           'failureProbability': device.parameters.failureProbability,
-          'trafficLoad': device.parameters.trafficLoad,
+          
         };
         break;
       case DeviceErrorType.routingError:

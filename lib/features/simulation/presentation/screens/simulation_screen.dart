@@ -179,7 +179,7 @@ class _SimulationScreenState extends ConsumerState<SimulationScreen> {
     final notifier = ref.read(simulationProvider.notifier);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       color: Theme.of(context).colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

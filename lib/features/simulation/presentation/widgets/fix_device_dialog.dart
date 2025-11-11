@@ -40,7 +40,6 @@ class _FixDeviceDialogState extends ConsumerState<FixDeviceDialog> {
   double _offlineLatency = 150;  // Outside 60-120 range
   double _offlineOverload = 5;   // Outside 10-60 range  
   double _offlinePing = 90;      // Outside 40-80 range
-  double _offlineTraffic = 10;   // Outside 20-70 range
 
   @override
   void initState() {
@@ -85,7 +84,7 @@ class _FixDeviceDialogState extends ConsumerState<FixDeviceDialog> {
           'latencyThreshold': _offlineLatency.round(),
           'overload': _offlineOverload.round(),
           'pingInterval': _offlinePing.round(),
-          'trafficLoad': _offlineTraffic.round(),
+         
         };
         _validateOfflineFix(); // This will set _isValid to false initially
         break;
@@ -341,20 +340,23 @@ class _FixDeviceDialogState extends ConsumerState<FixDeviceDialog> {
         
         // Show current values and target ranges
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: Colors.grey,
             borderRadius: BorderRadius.circular(8),
           ),
           child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 'Target Ranges:',
-                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.blue),
+                style: TextStyle(fontWeight: FontWeight.w600, color: Colors.blue,fontSize: 16),
               ),
               SizedBox(height: 4),
-              Text('Latency: 60-120ms • Overload: 10-60%'),
-              Text('Ping: 40-80ms • Traffic: 20-70%'),
+              Text('Latency: 60-120ms '),
+              Text("Overload: 10-60% "),
+              Text('Ping: 40-80ms '),
             ],
           ),
         ),
@@ -384,13 +386,6 @@ class _FixDeviceDialogState extends ConsumerState<FixDeviceDialog> {
           });
         }),
 
-        _buildOfflineSlider('Traffic Load (%)', _offlineTraffic, 0, 100, (v) {
-          setState(() {
-            _offlineTraffic = v;
-            _fixData['trafficLoad'] = v.round();
-            _validateOfflineFix();
-          });
-        }),
 
         const SizedBox(height: 16),
         
@@ -488,8 +483,6 @@ class _FixDeviceDialogState extends ConsumerState<FixDeviceDialog> {
         return value >= 10 && value <= 60;
       case 'Ping Interval (ms)':
         return value >= 40 && value <= 80;
-      case 'Traffic Load (%)':
-        return value >= 20 && value <= 70;
       default:
         return false;
     }
@@ -503,8 +496,6 @@ class _FixDeviceDialogState extends ConsumerState<FixDeviceDialog> {
         return 'Range: 10-60%';
       case 'Ping Interval (ms)':
         return 'Range: 40-80ms';
-      case 'Traffic Load (%)':
-        return 'Range: 20-70%';
       default:
         return '';
     }
@@ -522,10 +513,6 @@ class _FixDeviceDialogState extends ConsumerState<FixDeviceDialog> {
     if (_offlinePing < 40 || _offlinePing > 80) {
       issues.add('Ping must be 40-80ms');
     }
-    if (_offlineTraffic < 20 || _offlineTraffic > 70) {
-      issues.add('Traffic must be 20-70%');
-    }
-    
     return issues.isEmpty ? 'All parameters valid!' : issues.join(', ');
   }
 
@@ -533,9 +520,9 @@ class _FixDeviceDialogState extends ConsumerState<FixDeviceDialog> {
     final latencyOK = _offlineLatency >= 60 && _offlineLatency <= 120;
     final overloadOK = _offlineOverload >= 10 && _offlineOverload <= 60;
     final pingOK = _offlinePing >= 40 && _offlinePing <= 80;
-    final trafficOK = _offlineTraffic >= 20 && _offlineTraffic <= 70;
+   
 
-    _isValid = latencyOK && overloadOK && pingOK && trafficOK;
+    _isValid = latencyOK && overloadOK && pingOK;
   }
 
   Widget _buildCurrentFixUI() {
