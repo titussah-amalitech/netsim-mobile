@@ -203,7 +203,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     );
 
     _errorTimer = Timer.periodic(
-      const Duration(seconds: 10),
+      const Duration(seconds: 30),
       (_) => _generateRandomError(),
     );
   }
@@ -229,7 +229,7 @@ class SimulationNotifier extends StateNotifier<SimulationState> {
     if (!state.isRunning) return;
 
     if (state.lastErrorTime != null &&
-        DateTime.now().difference(state.lastErrorTime!).inSeconds < 10) {
+        DateTime.now().difference(state.lastErrorTime!).inSeconds < 30) {
       return;
     }
 
